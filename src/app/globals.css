@@ -1,0 +1,426 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------
+   Homeware & Co — design tokens
+   Bright, warm and quiet. Paper-white grounds, clay and sage accents,
+   ink for type. The opposite of a boutique blackout: this is daylight.
+------------------------------------------------------------------- */
+@theme {
+  --color-paper-50: #fdfcfa;
+  --color-paper-100: #f8f6f1;
+  --color-paper-200: #f1ede5;
+  --color-paper-300: #e6e0d4;
+  --color-paper-400: #d5ccbb;
+
+  --color-ink-900: #1c1a17;
+  --color-ink-800: #2e2a25;
+  --color-ink-700: #4a443c;
+  --color-ink-600: #6b6459;
+  --color-ink-500: #8d8579;
+
+  --color-clay-100: #f7ece6;
+  --color-clay-300: #dfae95;
+  --color-clay-500: #c07a55;
+  --color-clay-600: #a3603e;
+  --color-clay-700: #834b30;
+
+  --color-sage-100: #eef2ec;
+  --color-sage-300: #b8c9b4;
+  --color-sage-500: #7d9b78;
+  --color-sage-600: #5f7d5b;
+
+  --color-sand-300: #e2cfa8;
+  --color-sand-500: #c4a469;
+
+  --color-slate-accent: #6f7d89;
+  --color-rose-accent: #b3454f;
+  --color-jade-accent: #4f8f6f;
+  --color-copper: #b87754;
+
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-soft: 1rem;
+
+  --animate-rise: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-drift: drift 9s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Base
+------------------------------------------------------------------- */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper-50);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: 'kern', 'liga';
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--color-ink-900);
+  }
+
+  ::selection {
+    background: var(--color-clay-300);
+    color: var(--color-ink-900);
+  }
+
+  @media (pointer: fine) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--color-paper-100);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--color-paper-400);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-clay-500);
+    }
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-clay-500);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------
+   Components
+------------------------------------------------------------------- */
+@layer components {
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-clay-600);
+  }
+
+  .rule {
+    height: 1px;
+    background: var(--color-paper-300);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0.85rem 1.6rem;
+    transition:
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 0.3s ease,
+      color 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn-clay {
+    background: var(--color-clay-600);
+    color: var(--color-paper-50);
+    box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--color-clay-700) 70%, transparent);
+  }
+
+  .btn-clay:hover {
+    background: var(--color-clay-700);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -12px color-mix(in oklab, var(--color-clay-700) 75%, transparent);
+  }
+
+  .btn-ink {
+    background: var(--color-ink-900);
+    color: var(--color-paper-50);
+  }
+
+  .btn-ink:hover {
+    background: var(--color-ink-800);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    border: 1px solid var(--color-paper-400);
+    color: var(--color-ink-800);
+    background: transparent;
+  }
+
+  .btn-outline:hover {
+    border-color: var(--color-clay-500);
+    color: var(--color-clay-700);
+    transform: translateY(-2px);
+  }
+
+  /* Cards sit on paper, so they lift with shadow rather than glow. */
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-paper-200);
+    border-radius: var(--radius-soft);
+  }
+
+  .card-hover {
+    transition:
+      transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.45s ease,
+      box-shadow 0.45s ease;
+  }
+
+  @media (hover: hover) {
+    .card-hover:hover {
+      transform: translateY(-5px);
+      border-color: var(--color-clay-300);
+      box-shadow: 0 22px 40px -26px rgba(60, 45, 32, 0.45);
+    }
+  }
+
+  .field {
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--color-paper-300);
+    border-radius: 0.7rem;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    color: var(--color-ink-900);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .field::placeholder {
+    color: var(--color-ink-500);
+  }
+
+  .field:focus {
+    outline: none;
+    border-color: var(--color-clay-500);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-clay-300) 45%, transparent);
+  }
+
+  .label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-600);
+    margin-bottom: 0.4rem;
+  }
+
+  .rail {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rail > * {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+  }
+}
+
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Admin console
+   Kept deliberately cooler and denser than the shop, so the back office
+   never reads as the storefront.
+------------------------------------------------------------------- */
+@layer components {
+  .admin-shell {
+    --admin-bg: #f6f7f9;
+    --admin-panel: #ffffff;
+    --admin-panel-2: #eef1f5;
+    --admin-line: #dde2e9;
+    --admin-text: #1d2430;
+    --admin-muted: #6b7787;
+    --admin-accent: #2f6f8f;
+    --admin-good: #2e8b6b;
+    --admin-warn: #b5811f;
+    --admin-bad: #c04f5d;
+
+    background: var(--admin-bg);
+    color: var(--admin-text);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+  }
+
+  .admin-shell h1,
+  .admin-shell h2,
+  .admin-shell h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--admin-text);
+  }
+
+  .admin-panel {
+    background: var(--admin-panel);
+    border: 1px solid var(--admin-line);
+    border-radius: 0.75rem;
+  }
+
+  .admin-label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+  }
+
+  .admin-input {
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--admin-line);
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--admin-text);
+    transition: border-color 0.2s ease;
+  }
+
+  .admin-input:focus {
+    outline: none;
+    border-color: var(--admin-accent);
+  }
+
+  .admin-input::placeholder {
+    color: var(--admin-muted);
+  }
+
+  .admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: 0.5rem;
+    padding: 0.55rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .admin-btn-primary {
+    background: var(--admin-accent);
+    color: #fff;
+  }
+
+  .admin-btn-primary:hover {
+    background: color-mix(in oklab, var(--admin-accent) 85%, black);
+  }
+
+  .admin-btn-ghost {
+    border: 1px solid var(--admin-line);
+    color: var(--admin-muted);
+  }
+
+  .admin-btn-ghost:hover {
+    border-color: var(--admin-accent);
+    color: var(--admin-text);
+  }
+
+  .admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.875rem;
+    color: var(--admin-muted);
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .admin-nav-link:hover {
+    background: var(--admin-panel-2);
+    color: var(--admin-text);
+  }
+
+  .admin-nav-link[data-active='true'] {
+    background: color-mix(in oklab, var(--admin-accent) 12%, transparent);
+    color: var(--admin-accent);
+  }
+}

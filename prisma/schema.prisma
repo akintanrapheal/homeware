@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+
+  // Pooled connection — what the app queries through at runtime. The Neon
+  // Vercel integration injects this automatically.
+  url = env("DATABASE_URL")
+
+  // Direct (unpooled) connection. Migrations and `db push` cannot run through
+  // PgBouncer, so Prisma needs this separately. Neon injects it as
+  // DATABASE_URL_UNPOOLED; locally you can point both at the same string.
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  brand       String   @default("Homeware & Co")
+  category    String // cookware | knives | appliances | storage | tableware | glassware | textiles
+  family      String // cast iron | stainless steel | stoneware | glass | linen | …
+  description String
+  specs       String[] @default([])
+  care        String[] @default([])
+  inBox       String[] @default([])
+  sizeLabel   String?
+  price       Int // kobo-free: whole Naira
+  compareAt   Int? // slashed "was" price, whole Naira
+  stock       Int      @default(0)
+  imageUrl    String?
+  accent      String   @default("clay") // clay | sage | sand | slate | copper | ink
+  featured    Boolean  @default(false)
+  bestseller  Boolean  @default(false)
+  rating      Float    @default(4.8)
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([category])
+  @@index([featured])
+}
+
+model Customer {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  address      String?
+  city         String?
+  zone         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([email])
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  reference     String      @unique
+  // Null for guest checkout, which stays a first-class path — the snapshot
+  // fields below are always written so an order is complete on its own.
+  customerId    String?
+  customerName  String
+  email         String
+  phone         String
+  address       String
+  city          String
+  state         String
+  note          String?
+  deliveryFee   Int         @default(0)
+  subtotal      Int
+  total         Int
+  paymentMethod String      @default("whatsapp") // whatsapp | paystack
+  status        OrderStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items    OrderItem[]
+  customer Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String?
+  name      String
+  slug      String
+  price     Int
+  quantity  Int
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  body      String
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
