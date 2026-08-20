@@ -13,6 +13,7 @@ function OrderConfirmation() {
   const search = useSearchParams();
   const reference = params.reference;
   const method = search.get('method');
+  const unsaved = search.get('unsaved') === '1';
 
   const [order, setOrder] = useState<OrderDTO | null>(null);
   const [paid, setPaid] = useState<boolean | null>(null);
@@ -75,12 +76,19 @@ function OrderConfirmation() {
           </div>
 
           <p className="eyebrow mb-3">
-            {isPaid ? 'Payment received' : 'Order placed'}
+            {unsaved ? 'Send your order' : isPaid ? 'Payment received' : 'Order placed'}
           </p>
 
           <h1 className="font-display text-4xl font-light leading-tight text-ink-900 sm:text-5xl">
             Thank you{order?.customerName ? `, ${order.customerName.split(' ')[0]}` : ''}.
           </h1>
+
+          {unsaved && (
+            <p className="mx-auto mt-5 max-w-md rounded-xl border border-clay-300 bg-clay-100 px-4 py-3 text-sm leading-relaxed text-clay-700">
+              We could not record this order automatically — please send the WhatsApp message so we
+              do not miss it. Your reference below is still valid.
+            </p>
+          )}
 
           <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-ink-600">
             {method === 'whatsapp' ? (

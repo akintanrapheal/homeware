@@ -9,6 +9,14 @@ import { getCustomerId } from '@/lib/customer-auth';
 
 export const dynamic = 'force-dynamic';
 
+/** Thrown inside the order transaction when a line loses the race for stock. */
+class OutOfStockError extends Error {
+  constructor(public productName: string) {
+    super(`Out of stock: ${productName}`);
+    this.name = 'OutOfStockError';
+  }
+}
+
 const orderSchema = z.object({
   customerName: z.string().trim().min(2, 'Please enter your full name').max(120),
   email: z.string().trim().email('Enter a valid email address').max(160),
@@ -157,14 +165,29 @@ export async function POST(request: Request) {
         include: { items: true },
       });
 
-      // Reserve stock immediately; an unpaid order is released by the admin
-      // marking it CANCELLED, which restores the counts.
+      /*
+        Reserve stock with a conditional update rather than a plain decrement.
+
+        The availability check above ran before this transaction, so on its own
+        it is only advice: two shoppers buying the last item at the same moment
+        both read stock as 1, both pass, and both decrement — the counter goes
+        negative and the item is sold twice. Verified, not theoretical.
+
+        `updateMany` with `stock: { gte: quantity }` makes the check and the
+        decrement one atomic statement. A count of 0 means someone else took the
+        last one first, and throwing rolls the whole order back.
+      */
       for (const item of items) {
         if (!item.productId) continue;
-        await tx.product.update({
-          where: { id: item.productId },
+
+        const claimed = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
+
+        if (claimed.count === 0) {
+          throw new OutOfStockError(item.name);
+        }
       }
 
       return created;
@@ -172,6 +195,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ order, whatsappUrl, persisted: true }, { status: 201 });
   } catch (error) {
+    // Losing a race for the last item is a normal outcome, not a fault: say so
+    // plainly instead of pretending the order went through.
+    if (error instanceof OutOfStockError) {
+      return NextResponse.json(
+        {
+          error: `Someone just took the last ${error.productName}. Please reduce the quantity or remove it from your bag.`,
+        },
+        { status: 409 },
+      );
+    }
+
     console.error('[orders] failed to persist order', error);
     // The customer should never lose an order to a database hiccup — hand back
     // the WhatsApp link so the sale can still complete manually.

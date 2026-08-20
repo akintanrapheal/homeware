@@ -31,7 +31,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }
 
-  let event: { event?: string; data?: { reference?: string; status?: string } };
+  let event: {
+    event?: string;
+    data?: { reference?: string; status?: string; amount?: number; currency?: string };
+  };
   try {
     event = JSON.parse(raw);
   } catch {
@@ -42,6 +45,28 @@ export async function POST(request: Request) {
 
   if (event.event === 'charge.success' && reference && hasDatabase && prisma) {
     try {
+      /*
+        A valid signature proves Paystack sent this, not that it paid for this
+        order. Check the amount against what we asked for before marking it
+        settled — otherwise a transaction initialised against the same reference
+        for a smaller sum would mark a large order paid.
+
+        Paystack works in kobo; our totals are whole Naira.
+      */
+      const order = await prisma.order.findUnique({ where: { reference } });
+      if (!order) {
+        console.warn('[paystack] webhook for unknown reference', reference);
+        return NextResponse.json({ received: true });
+      }
+
+      const expectedKobo = order.total * 100;
+      if (typeof event.data?.amount === 'number' && event.data.amount < expectedKobo) {
+        console.error(
+          `[paystack] underpayment on ${reference}: paid ${event.data.amount}, expected ${expectedKobo}`,
+        );
+        return NextResponse.json({ received: true });
+      }
+
       await prisma.order.updateMany({
         where: { reference, status: { not: 'PAID' } },
         data: { status: 'PAID', paidAt: new Date() },

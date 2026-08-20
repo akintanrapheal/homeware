@@ -92,7 +92,11 @@ export default function CheckoutPage() {
       else window.open(data.whatsappUrl, '_blank');
 
       clear();
-      router.push(`/order/${reference}?method=whatsapp`);
+      // The order API answers 201 with persisted:false when it could not write to
+      // the database. Passing that on stops the confirmation page assuring the
+      // shopper their order is recorded when the shop has no record of it.
+      const unsaved = data.persisted === false ? '&unsaved=1' : '';
+      router.push(`/order/${reference}?method=whatsapp${unsaved}`);
     } catch (err) {
       pending?.close();
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');

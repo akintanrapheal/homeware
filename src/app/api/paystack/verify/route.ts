@@ -38,10 +38,22 @@ export async function GET(request: Request) {
     const paid = data.data?.status === 'success';
 
     if (paid && hasDatabase && prisma) {
-      await prisma.order.updateMany({
-        where: { reference, status: { not: 'PAID' } },
-        data: { status: 'PAID', paidAt: new Date() },
-      });
+      // Same guard as the webhook: a successful charge for less than the order
+      // total must not settle it.
+      const order = await prisma.order.findUnique({ where: { reference } });
+      const paidKobo = typeof data.data?.amount === 'number' ? data.data.amount : null;
+      const enough = !order || paidKobo === null || paidKobo >= order.total * 100;
+
+      if (enough) {
+        await prisma.order.updateMany({
+          where: { reference, status: { not: 'PAID' } },
+          data: { status: 'PAID', paidAt: new Date() },
+        });
+      } else {
+        console.error(
+          `[paystack] underpayment on ${reference}: paid ${paidKobo}, expected ${order.total * 100}`,
+        );
+      }
     }
 
     return NextResponse.json({

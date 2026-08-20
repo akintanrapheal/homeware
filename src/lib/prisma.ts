@@ -41,8 +41,16 @@ export function normalizeConnectionUrl(raw: string): string {
         layer quietly falls back to the bundled catalogue and bakes stale data
         into the static pages. Nothing fails loudly; the pages are just wrong.
       */
-      url.searchParams.set('connection_limit', isBuildPhase() ? '10' : '1');
-      if (isBuildPhase()) url.searchParams.set('pool_timeout', '30');
+      /*
+        A pool of one is right only where each request gets its own process, as
+        on Vercel. On a single long-running server six concurrent checkouts
+        queue behind one connection and time out — which the repo layer then
+        reports as a database hiccup rather than the self-inflicted contention
+        it is.
+      */
+      const serverless = Boolean(process.env.VERCEL) && !isBuildPhase();
+      url.searchParams.set('connection_limit', serverless ? '1' : '10');
+      if (!serverless) url.searchParams.set('pool_timeout', '30');
     }
 
     return url.toString();
