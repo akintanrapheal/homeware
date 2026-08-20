@@ -8,10 +8,19 @@ export const runtime = 'nodejs';
 /**
  * POST /api/admin/upload — product photography.
  *
- * Uploads go to Vercel Blob when BLOB_READ_WRITE_TOKEN is configured. Without
- * it the endpoint says so plainly rather than failing obscurely: pasting an
- * image URL still works everywhere in the admin, so an unconfigured store is
- * inconvenienced, not blocked.
+ * Uploads go to Vercel Blob. There are two ways a connected store authenticates
+ * and both must be accepted:
+ *
+ *   - OIDC, the current default: BLOB_STORE_ID plus a short-lived token the
+ *     platform rotates for you. No long-lived secret is stored anywhere.
+ *   - BLOB_READ_WRITE_TOKEN, a long-lived key, added only if you tick the
+ *     optional box when connecting — and needed for anything running off-platform.
+ *
+ * Insisting on the second refused perfectly good OIDC connections, so the guard
+ * now only checks that a store is attached at all and lets the SDK decide. If
+ * neither is present the endpoint says so plainly: pasting an image URL still
+ * works everywhere in the admin, so an unconfigured store is inconvenienced,
+ * not blocked.
  *
  * Body is multipart/form-data with a single `file` field.
  */
@@ -24,7 +33,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  const blobConfigured = Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID || process.env.VERCEL_OIDC_TOKEN,
+  );
+
+  if (!blobConfigured) {
     return NextResponse.json(
       {
         error:
@@ -71,6 +84,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: blob.url, size: file.size, type: file.type }, { status: 201 });
   } catch (error) {
     console.error('[upload] failed', error);
-    return NextResponse.json({ error: 'Upload failed. Please try again.' }, { status: 502 });
+
+    /*
+      Surface what actually went wrong rather than a generic failure. An
+      authentication problem here means the store is attached but the
+      credentials are not usable — which needs a different fix from a network
+      blip, and "Upload failed, please try again" would send someone retrying
+      forever.
+    */
+    const detail = error instanceof Error ? error.message : '';
+    const isAuth = /token|unauthor|forbidden|credential|access/i.test(detail);
+
+    return NextResponse.json(
+      {
+        error: isAuth
+          ? 'Vercel Blob rejected the credentials. Open the Blob store in Vercel, check this project is on its Projects tab, then redeploy so the new variables reach the running build.'
+          : 'Upload failed. Please try again.',
+        detail: detail.slice(0, 200) || undefined,
+      },
+      { status: 502 },
+    );
   }
 }

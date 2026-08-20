@@ -35,7 +35,12 @@ export function AdminImagePicker({
       body.append('file', file);
       const res = await fetch('/api/admin/upload', { method: 'POST', body });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? 'Upload failed');
+      if (!res.ok) {
+        // Keep the provider's own words: "payload too large" and "bad
+        // credentials" need different fixes, and collapsing them into one
+        // message sends people down the wrong path.
+        throw new Error(data?.detail ? `${data.error} (${data.detail})` : (data?.error ?? 'Upload failed'));
+      }
       onChange(data.url);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed');
