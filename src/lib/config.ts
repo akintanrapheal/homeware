@@ -29,7 +29,7 @@ export const STORE = {
   instagram:
     process.env.NEXT_PUBLIC_INSTAGRAM || 'https://instagram.com/homewareandco',
   tiktok: process.env.NEXT_PUBLIC_TIKTOK || 'https://tiktok.com/@homewareandco',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://homeware-and-co.vercel.app',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://homeware-ten.vercel.app',
   address: 'Lekki Phase 1, Lagos, Nigeria',
   hours: 'Mon – Sat, 9am – 6pm WAT',
 } as const;

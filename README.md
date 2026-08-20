@@ -110,7 +110,7 @@ used instead.
 npm i -g vercel
 vercel link          # pick this project
 npm run vercel:env   # writes .env with the real credentials
-npm run db:setup     # push schema + seed 25 products
+npm run db:setup     # push schema + seed 24 products
 ```
 
 6. **Redeploy** so the running deployment picks up the new variables.
