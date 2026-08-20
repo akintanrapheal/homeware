@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { CheckIcon, SpinnerIcon, TrashIcon } from '@/components/icons';
+import { CheckIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@/components/icons';
+import { ProductImage } from '@/components/product-art';
 import { discountPercent, formatNaira } from '@/lib/format';
-import { CATEGORIES, CATEGORY_LABEL, type CategoryId } from '@/lib/types';
+import { CATEGORY_LABEL, type CategoryId } from '@/lib/types';
 
 interface AdminProduct {
   id: string;
@@ -25,6 +27,7 @@ export default function AdminProductsPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<'all' | CategoryId>('all');
+  const [categoryList, setCategoryList] = useState<{ slug: string; label: string }[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,6 +47,13 @@ export default function AdminProductsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    fetch('/api/admin/categories')
+      .then((r) => (r.ok ? r.json() : { categories: [] }))
+      .then((d) => setCategoryList(d.categories ?? []))
+      .catch(() => setCategoryList([]));
+  }, []);
 
   async function patch(id: string, body: Partial<AdminProduct>) {
     const previous = products;
@@ -82,13 +92,19 @@ export default function AdminProductsPage() {
 
   return (
     <>
-      <header className="mb-6">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
         <h1 className="text-2xl">Products</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--admin-muted)' }}>
           Edit a field and click away to save. <strong>Sales price</strong> is what the customer
           pays; <strong>was price</strong> is the struck-through figure that creates the discount
           badge — leave it empty for no discount.
         </p>
+        </div>
+        <Link href="/admin/products/new" className="admin-btn admin-btn-primary shrink-0">
+          <PlusIcon width={15} height={15} />
+          New product
+        </Link>
       </header>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -104,8 +120,8 @@ export default function AdminProductsPage() {
           className="admin-input w-auto"
         >
           <option value="all">All categories</option>
-          {CATEGORIES.map((c) => (
-            <option key={c.id} value={c.id}>
+          {categoryList.map((c) => (
+            <option key={c.slug} value={c.slug}>
               {c.label}
             </option>
           ))}
@@ -155,10 +171,32 @@ export default function AdminProductsPage() {
                 return (
                   <tr key={p.id} className="border-b" style={{ borderColor: 'var(--admin-line)' }}>
                     <td className="px-4 py-3">
-                      <p style={{ color: 'var(--admin-text)' }}>{p.name}</p>
-                      <p className="text-xs" style={{ color: 'var(--admin-muted)' }}>
-                        {CATEGORY_LABEL[p.category]} · {p.slug}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="h-12 w-12 shrink-0 overflow-hidden rounded-md border"
+                          style={{ borderColor: 'var(--admin-line)', background: '#fff' }}
+                        >
+                          <ProductImage
+                            imageUrl={p.imageUrl}
+                            name={p.name}
+                            category={p.category}
+                            accent={'clay'}
+                            slug={p.slug}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <Link
+                            href={`/admin/products/${p.id}`}
+                            className="underline-offset-4 hover:underline"
+                            style={{ color: 'var(--admin-accent)' }}
+                          >
+                            {p.name}
+                          </Link>
+                          <p className="text-xs" style={{ color: 'var(--admin-muted)' }}>
+                            {CATEGORY_LABEL[p.category] ?? p.category} · {p.slug}
+                          </p>
+                        </div>
+                      </div>
                     </td>
 
                     <td className="px-3 py-3">

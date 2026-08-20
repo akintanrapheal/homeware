@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { CloseIcon, SearchIcon } from './icons';
-import { CATEGORIES } from '@/lib/types';
+import { CATEGORIES, type CategoryMeta } from '@/lib/types';
 
 const SORTS = [
   { id: 'featured', label: 'Featured' },
@@ -14,7 +14,14 @@ const SORTS = [
 
 const FAMILIES = ['oriental', 'floral', 'woody', 'fresh', 'gourmand'];
 
-export function ShopFilters({ resultCount }: { resultCount: number }) {
+export function ShopFilters({
+  resultCount,
+  categories,
+}: {
+  resultCount: number;
+  categories?: CategoryMeta[];
+}) {
+  const cats = categories?.length ? categories : CATEGORIES;
   const router = useRouter();
   const params = useSearchParams();
   const [term, setTerm] = useState(params.get('q') ?? '');
@@ -83,7 +90,7 @@ export function ShopFilters({ resultCount }: { resultCount: number }) {
         >
           All
         </button>
-        {CATEGORIES.map((category) => (
+        {cats.map((category) => (
           <button
             key={category.id}
             type="button"

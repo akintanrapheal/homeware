@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { ProductCard } from '@/components/product-card';
 import { ShopFilters } from '@/components/shop-filters';
 import { Reveal } from '@/components/reveal';
-import { getProducts } from '@/lib/repo';
+import { getCategories, getProducts } from '@/lib/repo';
 import { CATEGORY_LABEL, type CategoryId } from '@/lib/types';
 
 export const revalidate = 120;
@@ -30,7 +30,10 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
   const q = pick(params, 'q') ?? '';
   const sort = (pick(params, 'sort') as 'featured' | 'price-asc' | 'price-desc' | 'rating') ?? 'featured';
 
-  const products = await getProducts({ category, family, search: q, sort });
+  const [products, categories] = await Promise.all([
+    getProducts({ category, family, search: q, sort }),
+    getCategories(),
+  ]);
 
   const heading =
     q
@@ -61,7 +64,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
 
       <div className="mb-10">
         <Suspense fallback={<div className="h-32" />}>
-          <ShopFilters resultCount={products.length} />
+          <ShopFilters resultCount={products.length} categories={categories} />
         </Suspense>
       </div>
 

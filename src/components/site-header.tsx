@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useCart } from './cart-provider';
 import { useAccount } from './account-provider';
 import { BagIcon, CloseIcon, MenuIcon, SearchIcon, UserIcon } from './icons';
-import { CATEGORIES } from '@/lib/types';
+import { CATEGORIES, type CategoryMeta } from '@/lib/types';
 import { STORE } from '@/lib/config';
 
 const NAV = [
@@ -18,7 +18,8 @@ const NAV = [
   { href: '/contact', label: 'Contact' },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ categories }: { categories?: CategoryMeta[] }) {
+  const cats = categories?.length ? categories : CATEGORIES;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -230,7 +231,7 @@ export function SiteHeader() {
           <nav className="flex-1 overflow-y-auto px-6 py-7">
             <p className="eyebrow mb-4">Kitchen</p>
             <ul className="mb-8 space-y-1">
-              {CATEGORIES.filter((c) => c.group === 'kitchen').map((c) => (
+              {cats.filter((c) => c.group === 'kitchen').map((c) => (
                 <li key={c.id}>
                   <Link
                     href={`/shop?category=${c.id}`}
@@ -245,7 +246,7 @@ export function SiteHeader() {
 
             <p className="eyebrow mb-4">For the table</p>
             <ul className="mb-8 space-y-1">
-              {CATEGORIES.filter((c) => c.group === 'home').map((c) => (
+              {cats.filter((c) => c.group !== 'kitchen').map((c) => (
                 <li key={c.id}>
                   <Link
                     href={`/shop?category=${c.id}`}

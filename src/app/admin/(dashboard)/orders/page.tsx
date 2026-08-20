@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { SpinnerIcon } from '@/components/icons';
 import { formatDate, formatNaira } from '@/lib/format';
@@ -96,7 +97,8 @@ export default function AdminOrdersPage() {
       <header className="mb-6">
         <h1 className="text-2xl">Orders</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--admin-muted)' }}>
-          Moving an order to Cancelled returns its stock; moving it back out takes the stock again.
+          Click a reference to open the full order — items with photos, customer details and every
+        status control.
         </p>
       </header>
 
@@ -151,9 +153,13 @@ export default function AdminOrdersPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="font-semibold" style={{ color: 'var(--admin-text)' }}>
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="font-semibold underline-offset-4 hover:underline"
+                      style={{ color: 'var(--admin-accent)' }}
+                    >
                       {order.reference}
-                    </span>
+                    </Link>
                     <span
                       className="rounded-full px-2 py-0.5 text-[0.62rem] font-medium"
                       style={{
@@ -229,9 +235,15 @@ export default function AdminOrdersPage() {
               )}
 
               <div
-                className="mt-4 flex flex-wrap gap-1.5 border-t pt-3"
+                className="mt-4 flex flex-wrap items-center gap-1.5 border-t pt-3"
                 style={{ borderColor: 'var(--admin-line)' }}
               >
+                <Link
+                  href={`/admin/orders/${order.id}`}
+                  className="admin-btn admin-btn-ghost mr-1 !py-1.5 text-[0.65rem]"
+                >
+                  Open order
+                </Link>
                 {STATUSES.map((s) => (
                   <button
                     key={s}

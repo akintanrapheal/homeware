@@ -1,13 +1,11 @@
 export type Accent = 'clay' | 'sage' | 'sand' | 'slate' | 'copper' | 'ink';
 
-export type CategoryId =
-  | 'cookware'
-  | 'tableware'
-  | 'glassware'
-  | 'knives'
-  | 'storage'
-  | 'appliances'
-  | 'textiles';
+/**
+ * Categories are editable in the admin, so this cannot be a closed union — a
+ * new category invented at 2am must still typecheck. The built-in list below is
+ * the seed and the offline fallback, not the whole universe.
+ */
+export type CategoryId = string;
 
 export interface Product {
   id: string;
@@ -77,7 +75,9 @@ export interface CategoryMeta {
   id: CategoryId;
   label: string;
   blurb: string;
-  group: 'kitchen' | 'home';
+  group: string;
+  /** Which generated silhouette to draw when a product has no photo. */
+  shape?: string;
 }
 
 export const CATEGORIES: CategoryMeta[] = [
@@ -125,7 +125,15 @@ export const CATEGORIES: CategoryMeta[] = [
   },
 ];
 
-export const CATEGORY_LABEL: Record<CategoryId, string> = CATEGORIES.reduce(
+export const CATEGORY_LABEL: Record<string, string> = CATEGORIES.reduce(
   (acc, c) => ({ ...acc, [c.id]: c.label }),
-  {} as Record<CategoryId, string>,
+  {} as Record<string, string>,
 );
+
+/** Falls back to a readable form so an unknown slug never renders as blank. */
+export function categoryLabel(id: string, known?: CategoryMeta[]): string {
+  const found = known?.find((c) => c.id === id);
+  if (found) return found.label;
+  if (CATEGORY_LABEL[id]) return CATEGORY_LABEL[id];
+  return id.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+}

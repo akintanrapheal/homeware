@@ -177,7 +177,7 @@ function Linen({ base, light, line, grad }: ShapeProps) {
   );
 }
 
-const SHAPES: Record<CategoryId, (p: ShapeProps) => React.ReactNode> = {
+const SHAPES: Record<string, (p: ShapeProps) => React.ReactNode> = {
   cookware: Pot,
   knives: Knife,
   appliances: Kettle,
@@ -194,16 +194,25 @@ export function ProductArt({
   category,
   accent,
   slug,
+  shape,
   className,
 }: {
   category: CategoryId;
   accent: Accent;
   slug?: string;
+  /** Overrides the silhouette — set per category in the admin. */
+  shape?: string;
   className?: string;
 }) {
   const colors = ACCENTS[accent] ?? ACCENTS.clay;
-  const Shape = slug && PAN_SLUGS.has(slug) ? Pan : (SHAPES[category] ?? Pot);
-  const uid = `${category}-${accent}${slug && PAN_SLUGS.has(slug) ? '-pan' : ''}`;
+
+  // A category invented in the admin has no silhouette of its own, so fall back
+  // through its configured shape, then its slug, then a generic pot — never
+  // render nothing.
+  const isPan = Boolean(slug && PAN_SLUGS.has(slug));
+  const Shape = isPan ? Pan : (SHAPES[shape ?? ''] ?? SHAPES[category] ?? Pot);
+  const shapeKey = isPan ? 'pan' : (shape && SHAPES[shape] ? shape : SHAPES[category] ? category : 'pot');
+  const uid = `${shapeKey}-${accent}`;
 
   return (
     <svg

@@ -1,10 +1,15 @@
 import { CartDrawer } from '@/components/cart-drawer';
+import { getCategories } from '@/lib/repo';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { WhatsAppFloat } from '@/components/whatsapp-float';
 
 /** Shopfront chrome. Everything customer-facing renders inside this. */
-export default function StorefrontLayout({ children }: { children: React.ReactNode }) {
+export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
+  // Fetched once here rather than in the header itself: the header is a client
+  // component, and the nav should not cost a round trip on every page.
+  const categories = await getCategories();
+
   return (
     <>
       <a
@@ -13,7 +18,7 @@ export default function StorefrontLayout({ children }: { children: React.ReactNo
       >
         Skip to content
       </a>
-      <SiteHeader />
+      <SiteHeader categories={categories} />
       <main id="main">{children}</main>
       <SiteFooter />
       <CartDrawer />

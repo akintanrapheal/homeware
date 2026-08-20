@@ -45,6 +45,27 @@ model Product {
   @@index([featured])
 }
 
+/**
+ * Categories are data, not code, so the shop owner can add "Bakeware" without a
+ * deploy. Product.category holds the slug rather than a foreign key: deleting a
+ * category should orphan its products for re-filing, never delete stock.
+ */
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  blurb     String   @default("")
+  group     String   @default("kitchen")
+  /** Which generated silhouette to draw for products with no photo. */
+  shape     String   @default("cookware")
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
 model Customer {
   id           String   @id @default(cuid())
   email        String   @unique

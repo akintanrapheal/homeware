@@ -16,6 +16,7 @@ const LINKS = [
   { href: '/admin', label: 'Dashboard', icon: SparkleIcon },
   { href: '/admin/orders', label: 'Orders', icon: TruckIcon },
   { href: '/admin/products', label: 'Products', icon: BagIcon },
+  { href: '/admin/categories', label: 'Categories', icon: SparkleIcon },
   { href: '/admin/customers', label: 'Customers', icon: UserIcon },
 ];
 

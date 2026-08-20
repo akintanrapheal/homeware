@@ -1,6 +1,7 @@
 import { CATALOG } from './catalog';
 import { hasDatabase, prisma } from './prisma';
-import type { Accent, CategoryId, Product } from './types';
+import type { Accent, CategoryId, CategoryMeta, Product } from './types';
+import { CATEGORIES } from './types';
 
 /**
  * Single read/write surface for product data. Server components and API routes
@@ -185,4 +186,41 @@ export async function getBestsellers(limit = 8): Promise<Product[]> {
   const all = await getProducts({ sort: 'featured' });
   const best = all.filter((p) => p.bestseller);
   return (best.length >= limit ? best : all).slice(0, limit);
+}
+
+/**
+ * Categories, from the database when there is one. Falls back to the bundled
+ * list so the nav, footer and shop filters never render empty — a storefront
+ * with no categories looks broken in a way a missing product does not.
+ */
+export async function getCategories(includeInactive = false): Promise<CategoryMeta[]> {
+  if (!hasDatabase || !prisma) return CATEGORIES;
+
+  try {
+    const rows = await prisma.category.findMany({
+      where: includeInactive ? undefined : { active: true },
+      orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }],
+    });
+    if (rows.length === 0) return CATEGORIES;
+
+    return rows.map((r) => ({
+      id: r.slug,
+      label: r.label,
+      blurb: r.blurb,
+      group: r.group,
+      shape: r.shape,
+    }));
+  } catch (error) {
+    console.error('[repo] category query failed, serving bundled list', error);
+    return CATEGORIES;
+  }
+}
+
+/** Slug → generated-artwork shape, for products with no photograph. */
+export async function getCategoryShapes(): Promise<Record<string, string>> {
+  const cats = await getCategories(true);
+  return cats.reduce<Record<string, string>>((acc, c) => {
+    acc[c.id] = c.shape ?? c.id;
+    return acc;
+  }, {});
 }

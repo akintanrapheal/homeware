@@ -28,12 +28,33 @@ export function normalizeConnectionUrl(raw: string): string {
     if (!url.host.includes('-pooler')) return raw;
 
     if (!url.searchParams.has('pgbouncer')) url.searchParams.set('pgbouncer', 'true');
-    if (!url.searchParams.has('connection_limit')) url.searchParams.set('connection_limit', '1');
+
+    if (!url.searchParams.has('connection_limit')) {
+      /*
+        One connection is right at runtime: each serverless invocation gets its
+        own client and handles one request, so a bigger pool just exhausts the
+        pooler under load.
+
+        It is wrong during a build. Next prerenders every product page
+        concurrently inside a single Node process, and with a pool of one they
+        queue behind each other until they time out — at which point the repo
+        layer quietly falls back to the bundled catalogue and bakes stale data
+        into the static pages. Nothing fails loudly; the pages are just wrong.
+      */
+      url.searchParams.set('connection_limit', isBuildPhase() ? '10' : '1');
+      if (isBuildPhase()) url.searchParams.set('pool_timeout', '30');
+    }
+
     return url.toString();
   } catch {
     // Not a parseable URL — hand it to Prisma untouched and let it complain.
     return raw;
   }
+}
+
+/** True while `next build` is prerendering, on Vercel and locally alike. */
+function isBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === 'phase-production-build';
 }
 
 const globalForPrisma = globalThis as unknown as {

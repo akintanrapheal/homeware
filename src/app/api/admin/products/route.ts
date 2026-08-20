@@ -15,7 +15,7 @@ const productSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers and hyphens'),
   name: z.string().trim().min(2).max(160),
   brand: z.string().trim().max(80).default('Homeware & Co'),
-  category: z.enum(['cookware', 'knives', 'appliances', 'storage', 'tableware', 'glassware', 'textiles']),
+  category: z.string().trim().min(2).max(40),
   family: z.string().trim().min(2).max(40),
   description: z.string().trim().min(10).max(2000),
   specs: z.array(z.string().trim().max(160)).max(16).default([]),

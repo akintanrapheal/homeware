@@ -11,8 +11,8 @@ import {
   TruckIcon,
   WhatsAppIcon,
 } from '@/components/icons';
-import { getBestsellers, getFeatured, getProducts } from '@/lib/repo';
-import { CATEGORIES } from '@/lib/types';
+import { getBestsellers, getCategories, getFeatured, getProducts } from '@/lib/repo';
+
 import { STORE } from '@/lib/config';
 import { buildEnquiryLink } from '@/lib/whatsapp';
 
@@ -67,14 +67,18 @@ const PROMISES = [
 ];
 
 export default async function HomePage() {
-  const [featured, bestsellers, all] = await Promise.all([
+  const [featured, bestsellers, all, categories] = await Promise.all([
     getFeatured(4),
     getBestsellers(8),
     getProducts(),
+    getCategories(),
   ]);
 
   const heroProduct = featured[0] ?? all[0];
-  const table = all.filter((p) => ['tableware', 'glassware', 'textiles'].includes(p.category));
+  // Grouped, not hardcoded, so a category added in the admin lands in the right
+  // section without a code change.
+  const homeSlugs = new Set(categories.filter((c) => c.group !== 'kitchen').map((c) => c.id));
+  const table = all.filter((p) => homeSlugs.has(p.category));
 
   return (
     <>
@@ -231,7 +235,7 @@ export default async function HomePage() {
           </Reveal>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-            {CATEGORIES.map((category, i) => {
+            {categories.map((category, i) => {
               const sample = all.find((p) => p.category === category.id);
               return (
                 <Reveal key={category.id} delay={i * 60}>
@@ -265,7 +269,7 @@ export default async function HomePage() {
               );
             })}
 
-            <Reveal delay={CATEGORIES.length * 60}>
+            <Reveal delay={categories.length * 60}>
               <Link
                 href="/shop"
                 className="group flex h-44 flex-col items-center justify-center gap-3 rounded-[var(--radius-soft)] border border-dashed border-clay-300 p-5 text-center transition hover:border-clay-500 sm:h-56"

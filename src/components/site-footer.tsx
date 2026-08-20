@@ -2,10 +2,11 @@ import Link from 'next/link';
 import { NewsletterForm } from './newsletter-form';
 import { InstagramIcon, MailIcon, PhoneIcon, PinIcon, TikTokIcon, WhatsAppIcon } from './icons';
 import { STORE } from '@/lib/config';
-import { CATEGORIES } from '@/lib/types';
+import { getCategories } from '@/lib/repo';
 
-export function SiteFooter() {
+export async function SiteFooter() {
   const year = new Date().getFullYear();
+  const categories = await getCategories();
 
   return (
     <footer className="relative overflow-hidden border-t border-paper-200 bg-paper-100">
@@ -61,7 +62,7 @@ export function SiteFooter() {
           <div>
             <h3 className="eyebrow mb-5">Shop</h3>
             <ul className="space-y-3">
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <li key={c.id}>
                   <Link
                     href={`/shop?category=${c.id}`}

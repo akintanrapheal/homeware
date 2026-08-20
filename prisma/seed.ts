@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { CATALOG } from '../src/lib/catalog';
+import { CATEGORIES } from '../src/lib/types';
 
 const prisma = new PrismaClient();
 
@@ -12,7 +13,18 @@ async function main() {
     throw new Error('DATABASE_URL is not set. Add it to .env before seeding.');
   }
 
-  console.log(`Seeding ${CATALOG.length} products…`);
+  console.log(`Seeding ${CATEGORIES.length} categories…`);
+  for (const [i, c] of CATEGORIES.entries()) {
+    await prisma.category.upsert({
+      where: { slug: c.id },
+      update: { label: c.label, blurb: c.blurb, group: c.group, shape: c.id, sortOrder: i },
+      create: { slug: c.id, label: c.label, blurb: c.blurb, group: c.group, shape: c.id, sortOrder: i },
+    });
+    console.log(`  ✓ ${c.label}`);
+  }
+
+  console.log(`
+Seeding ${CATALOG.length} products…`);
 
   for (const product of CATALOG) {
     // `id` is intentionally omitted: Postgres generates its own cuid, and the
