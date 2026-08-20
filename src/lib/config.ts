@@ -23,9 +23,9 @@ export const STORE = {
   tagline: 'For the home you actually live in.',
   description:
     'Homeware & Co — cookware, tableware, glassware, knives and kitchen storage chosen to be used every day. Honest pricing, proper materials, delivered across Nigeria.',
-  whatsapp: toWhatsAppNumber(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '2349066579857'),
+  whatsapp: toWhatsAppNumber(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '09060237909'),
   email: process.env.NEXT_PUBLIC_STORE_EMAIL || 'hello@homewareandco.com',
-  phone: process.env.NEXT_PUBLIC_STORE_PHONE || '+234 906 657 9857',
+  phone: process.env.NEXT_PUBLIC_STORE_PHONE || '+234 906 023 7909',
   instagram:
     process.env.NEXT_PUBLIC_INSTAGRAM || 'https://instagram.com/homewareandco',
   tiktok: process.env.NEXT_PUBLIC_TIKTOK || 'https://tiktok.com/@homewareandco',
