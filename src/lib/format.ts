@@ -24,12 +24,12 @@ export function formatDate(value: string | Date): string {
   }).format(new Date(value));
 }
 
-/** MLS-7F3K2Q — short, human-readable, safe to read out on a call. */
+/** HWC-7F3K2Q — short, human-readable, safe to read out over the phone. */
 export function generateReference(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let out = '';
   for (let i = 0; i < 6; i++) {
     out += alphabet[Math.floor(Math.random() * alphabet.length)];
   }
-  return `MLS-${out}`;
+  return `HWC-${out}`;
 }

@@ -4,7 +4,7 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/paystack/verify?reference=MLS-XXXXXX
+ * GET /api/paystack/verify?reference=HWC-XXXXXX
  *
  * Called by the confirmation page when Paystack redirects back. The webhook is
  * the authoritative signal, but customers land here first — verifying directly
