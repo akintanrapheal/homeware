@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
           </span>
           <div>
             <p className="text-sm font-semibold" style={{ color: 'var(--admin-text)' }}>
-              Minah & Co
+              Homeware & Co
             </p>
             <p className="text-xs" style={{ color: 'var(--admin-muted)' }}>
               Store administration

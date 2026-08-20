@@ -13,7 +13,7 @@ import { ProductArt } from '@/components/product-art';
 export default function NotFound() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-16 text-center">
-      <Link href="/" className="mb-10 leading-none" aria-label="Minah & Co home">
+      <Link href="/" className="mb-10 leading-none" aria-label="Homeware & Co home">
         <span className="block font-display text-2xl font-light tracking-[0.18em] text-ink-900">
           HOMEWARE
         </span>

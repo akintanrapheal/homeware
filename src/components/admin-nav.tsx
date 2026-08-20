@@ -119,7 +119,7 @@ export function AdminNav() {
         <div>
           <div className="mb-8 px-2">
             <p className="text-sm font-semibold" style={{ color: 'var(--admin-text)' }}>
-              Minah & Co
+              Homeware & Co
             </p>
             <p className="text-xs" style={{ color: 'var(--admin-muted)' }}>
               Store administration

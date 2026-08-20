@@ -86,7 +86,7 @@ export function SiteHeader() {
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="-ml-2 p-2 text-ink-800 transition hover:text-clay-600 lg:hidden"
+            className="tap -ml-2 shrink-0 text-ink-800 transition hover:text-clay-600 lg:hidden"
             aria-label="Open menu"
           >
             <MenuIcon width={22} height={22} />
@@ -104,16 +104,21 @@ export function SiteHeader() {
             ))}
           </nav>
 
+          {/*
+            In normal flow, never absolutely positioned. Centring the wordmark
+            over the viewport put it underneath the icon row on narrow screens —
+            flex-1 lets it take the space that is actually free instead.
+          */}
           <Link
             href="/"
-            className="absolute left-1/2 -translate-x-1/2 text-center leading-none lg:static lg:translate-x-0"
+            className="min-w-0 flex-1 text-center leading-none lg:flex-none"
             aria-label={`${STORE.name} home`}
           >
-            <span className="block font-display text-xl font-light tracking-[0.18em] text-ink-900 sm:text-2xl">
+            <span className="block font-display text-lg font-light tracking-[0.12em] text-ink-900 sm:text-2xl sm:tracking-[0.18em]">
               HOMEWARE
             </span>
-            <span className="eyebrow block text-[0.5rem] sm:text-[0.55rem]">
-              & Co
+            <span className="eyebrow block text-[0.48rem] sm:text-[0.55rem]">
+              &amp; Co
             </span>
           </Link>
 
@@ -129,11 +134,11 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}
-              className="p-2 text-ink-800 transition hover:text-clay-600"
+              className="tap text-ink-800 transition hover:text-clay-600"
               aria-label="Search products"
               aria-expanded={searchOpen}
             >
@@ -141,7 +146,7 @@ export function SiteHeader() {
             </button>
             <Link
               href={customer ? '/account' : '/account/login'}
-              className="p-2 text-ink-800 transition hover:text-clay-600"
+              className="tap hidden text-ink-800 transition hover:text-clay-600 sm:inline-flex"
               aria-label={customer ? 'Your account' : 'Sign in'}
               title={customer ? customer.name : 'Sign in'}
             >
@@ -150,7 +155,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={open}
-              className="relative -mr-2 p-2 text-ink-800 transition hover:text-clay-600"
+              className="tap relative -mr-2 text-ink-800 transition hover:text-clay-600"
               aria-label={`Open cart, ${count} item${count === 1 ? '' : 's'}`}
             >
               <BagIcon width={21} height={21} />
@@ -215,7 +220,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => setMenuOpen(false)}
-              className="p-1.5 text-ink-700 hover:text-clay-600"
+              className="tap -mr-2 text-ink-700 hover:text-clay-600"
               aria-label="Close menu"
             >
               <CloseIcon />

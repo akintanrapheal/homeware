@@ -43,7 +43,7 @@ export default function AboutPage() {
             Built for kitchens that <span className="italic text-clay-600">get used</span>
           </h1>
           <p className="mx-auto mt-7 max-w-xl text-base leading-relaxed text-ink-600">
-            Minah & Co started the way most good things do here — one person, a WhatsApp
+            Homeware & Co started the way most good things do here — one person, a WhatsApp
             status, and a small box of bottles she genuinely believed in.
           </p>
         </Reveal>

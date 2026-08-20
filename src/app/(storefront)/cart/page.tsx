@@ -79,7 +79,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => remove(product.slug)}
-                      className="shrink-0 p-1.5 text-ink-500 transition hover:text-rose-accent"
+                      className="tap shrink-0 -mr-2 text-ink-500 transition hover:text-rose-accent"
                       aria-label={`Remove ${product.name}`}
                     >
                       <TrashIcon width={17} height={17} />
@@ -91,7 +91,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => setQuantity(product.slug, quantity - 1)}
-                        className="p-2.5 text-ink-700 transition hover:text-clay-600"
+                        className="tap-sm text-ink-700 transition hover:text-clay-600"
                         aria-label="Decrease quantity"
                       >
                         <MinusIcon width={14} height={14} />
@@ -102,7 +102,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => setQuantity(product.slug, quantity + 1)}
-                        className="p-2.5 text-ink-700 transition hover:text-clay-600"
+                        className="tap-sm text-ink-700 transition hover:text-clay-600"
                         aria-label="Increase quantity"
                       >
                         <PlusIcon width={14} height={14} />

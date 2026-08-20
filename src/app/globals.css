@@ -303,6 +303,28 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /*
+    A 16px icon with 6px of padding is a 28px target — roughly a coin flip to
+    tap on a phone. These keep the hit area at the 44px guideline without
+    changing how big the glyph looks.
+  */
+  .tap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  /* For controls sitting inside a compact pill, where 44px would burst it. */
+  .tap-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
 }
 
 /* ------------------------------------------------------------------
