@@ -96,6 +96,12 @@ function LoginForm() {
           </button>
 
           <p className="text-center text-xs text-ink-500">
+            <Link href="/account/forgot" className="text-clay-600 hover:text-clay-700">
+              Forgot your password?
+            </Link>
+          </p>
+
+          <p className="text-center text-xs text-ink-500">
             New here?{' '}
             <Link
               href={`/account/register${next !== '/account' ? `?next=${encodeURIComponent(next)}` : ''}`}

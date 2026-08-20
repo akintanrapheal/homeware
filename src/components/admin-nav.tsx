@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   BagIcon,
+  ShieldIcon,
   CloseIcon,
   MenuIcon,
   SparkleIcon,
@@ -18,6 +19,7 @@ const LINKS = [
   { href: '/admin/products', label: 'Products', icon: BagIcon },
   { href: '/admin/categories', label: 'Categories', icon: SparkleIcon },
   { href: '/admin/customers', label: 'Customers', icon: UserIcon },
+  { href: '/admin/settings', label: 'Settings', icon: ShieldIcon },
 ];
 
 export function AdminNav() {

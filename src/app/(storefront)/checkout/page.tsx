@@ -46,6 +46,9 @@ export default function CheckoutPage() {
     setError('');
 
     const form = new FormData(event.currentTarget);
+    // One key per checkout attempt, so a retry on a flaky connection resolves to
+    // the same order instead of a second one.
+    const idempotencyKey = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
     const payload = {
       customerName: String(form.get('customerName') ?? ''),
       email: String(form.get('email') ?? ''),
@@ -55,6 +58,7 @@ export default function CheckoutPage() {
       zone,
       note: String(form.get('note') ?? '') || null,
       paymentMethod,
+      idempotencyKey,
       items: details.map((d) => ({ slug: d.slug, quantity: d.quantity })),
     };
 

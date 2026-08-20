@@ -18,7 +18,13 @@ const NAV = [
   { href: '/contact', label: 'Contact' },
 ];
 
-export function SiteHeader({ categories }: { categories?: CategoryMeta[] }) {
+export function SiteHeader({
+  categories,
+  announcement,
+}: {
+  categories?: CategoryMeta[];
+  announcement?: string;
+}) {
   const cats = categories?.length ? categories : CATEGORIES;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -73,7 +79,7 @@ export function SiteHeader({ categories }: { categories?: CategoryMeta[] }) {
   return (
     <>
       <div className="bg-paper-100 text-center text-[0.66rem] tracking-[0.28em] uppercase text-clay-600/90 py-2 px-4">
-        Free delivery on orders over ₦120,000 · Nationwide
+        {announcement?.trim() || 'Free delivery on orders over ₦120,000 · Nationwide'}
       </div>
 
       <header

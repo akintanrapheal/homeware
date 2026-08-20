@@ -2,13 +2,32 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { isAdmin } from '@/lib/auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { audit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const schema = z.object({
   status: z.enum(['PENDING', 'PAID', 'PACKED', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+  /** Set when the operator has confirmed an unusual move. */
+  force: z.boolean().optional(),
 });
+
+type Status = 'PENDING' | 'PAID' | 'PACKED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+
+/**
+ * Fulfilment normally runs forwards. Going backwards is not forbidden — a
+ * mis-click has to be undoable — but it is not offered silently either, so a
+ * DELIVERED order does not quietly become PENDING and lose its place.
+ */
+const FORWARD: Record<Status, Status[]> = {
+  PENDING: ['PAID', 'PACKED', 'CANCELLED'],
+  PAID: ['PACKED', 'SHIPPED', 'CANCELLED'],
+  PACKED: ['SHIPPED', 'DELIVERED', 'CANCELLED'],
+  SHIPPED: ['DELIVERED', 'CANCELLED'],
+  DELIVERED: [],
+  CANCELLED: ['PENDING', 'PAID'],
+};
 
 /** PATCH /api/admin/orders/:id — advance an order through fulfilment. */
 export async function PATCH(
@@ -34,6 +53,23 @@ export async function PATCH(
   }
 
   const nextStatus = parsed.data.status;
+  const current = existing.status as Status;
+
+  if (nextStatus === current) {
+    return NextResponse.json({ order: existing });
+  }
+
+  if (!parsed.data.force && !FORWARD[current].includes(nextStatus)) {
+    return NextResponse.json(
+      {
+        error: `Moving an order from ${current} to ${nextStatus} is going backwards. Confirm to do it anyway.`,
+        needsConfirmation: true,
+        from: current,
+        to: nextStatus,
+      },
+      { status: 409 },
+    );
+  }
 
   const order = await prisma.$transaction(async (tx) => {
     // Cancelling returns the reserved stock; un-cancelling takes it back out.
@@ -63,6 +99,11 @@ export async function PATCH(
       },
       include: { items: true },
     });
+  });
+
+  await audit('order.status', `${existing.reference}: ${current} → ${nextStatus}`, {
+    target: existing.reference,
+    meta: { from: current, to: nextStatus, forced: Boolean(parsed.data.force) },
   });
 
   return NextResponse.json({ order });

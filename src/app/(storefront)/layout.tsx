@@ -1,5 +1,6 @@
 import { CartDrawer } from '@/components/cart-drawer';
 import { getCategories } from '@/lib/repo';
+import { getSettings } from '@/lib/settings';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { WhatsAppFloat } from '@/components/whatsapp-float';
@@ -8,7 +9,7 @@ import { WhatsAppFloat } from '@/components/whatsapp-float';
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
   // Fetched once here rather than in the header itself: the header is a client
   // component, and the nav should not cost a round trip on every page.
-  const categories = await getCategories();
+  const [categories, settings] = await Promise.all([getCategories(), getSettings()]);
 
   return (
     <>
@@ -18,7 +19,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
       >
         Skip to content
       </a>
-      <SiteHeader categories={categories} />
+      <SiteHeader categories={categories} announcement={settings.announcement} />
       <main id="main">{children}</main>
       <SiteFooter />
       <CartDrawer />

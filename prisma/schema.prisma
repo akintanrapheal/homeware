@@ -50,6 +50,102 @@ model Product {
  * deploy. Product.category holds the slug rather than a foreign key: deleting a
  * category should orphan its products for re-filing, never delete stock.
  */
+/**
+ * A single row holding everything the shop owner can edit without a deploy.
+ * Kept as one row rather than a key/value bag so the fields stay typed and a
+ * typo in a key cannot silently blank the storefront.
+ *
+ * Secrets live here too. They are never sent to the browser: the settings API
+ * returns whether a key is set, not the key itself.
+ */
+model StoreSettings {
+  id String @id @default("singleton")
+
+  storeName   String @default("Homeware & Co")
+  tagline     String @default("For the home you actually live in.")
+  description String @default("")
+
+  whatsapp  String @default("")
+  email     String @default("")
+  phone     String @default("")
+  instagram String @default("")
+  tiktok    String @default("")
+  address   String @default("")
+  hours     String @default("")
+
+  freeDeliveryThreshold Int @default(120000)
+  announcement          String @default("")
+
+  paystackPublicKey String?
+  paystackSecretKey String?
+  paystackEnabled   Boolean @default(false)
+
+  emailProvider  String  @default("resend")
+  emailApiKey    String?
+  emailFrom      String?
+  emailReplyTo   String?
+  emailOnOrder   Boolean @default(true)
+  notifyStore    Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+}
+
+/** Delivery zones, editable rather than compiled in. */
+model DeliveryZoneRow {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  fee       Int      @default(0)
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
+/**
+ * Fixed-window rate limiting. Serverless instances share nothing in memory, so
+ * the counter has to live somewhere both of them can see.
+ */
+model RateLimit {
+  id        String   @id @default(cuid())
+  bucket    String
+  identity  String
+  count     Int      @default(0)
+  expiresAt DateTime
+
+  @@unique([bucket, identity])
+  @@index([expiresAt])
+}
+
+/** Who changed what. One shared admin password means no accountability without it. */
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  target    String?
+  summary   String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/** Single-use, short-lived. The token itself is stored hashed. */
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  customerId String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
 model Category {
   id        String   @id @default(cuid())
   slug      String   @unique
@@ -79,6 +175,7 @@ model Customer {
   updatedAt    DateTime @updatedAt
 
   orders Order[]
+  resetTokens PasswordResetToken[]
 
   @@index([email])
 }
@@ -86,6 +183,8 @@ model Customer {
 model Order {
   id            String      @id @default(cuid())
   reference     String      @unique
+  /** Client-supplied key so a double-tapped checkout cannot create two orders. */
+  idempotencyKey String?    @unique
   // Null for guest checkout, which stays a first-class path — the snapshot
   // fields below are always written so an order is complete on its own.
   customerId    String?

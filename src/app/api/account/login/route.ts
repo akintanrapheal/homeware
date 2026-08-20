@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { identify, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { hasDatabase, prisma } from '@/lib/prisma';
 import {
@@ -33,6 +34,12 @@ export async function POST(request: Request) {
   }
 
   const { email, password } = parsed.data;
+
+  const byIp = await rateLimit('login-ip', identify(request), 10, 300);
+  if (!byIp.ok) return tooManyRequests(byIp);
+  const byEmail = await rateLimit('login-email', email, 6, 900);
+  if (!byEmail.ok) return tooManyRequests(byEmail, 'Too many sign-in attempts for this account. Please wait a few minutes.');
+
   const customer = await prisma.customer.findUnique({ where: { email } });
 
   // One message for both "no such email" and "wrong password", so the endpoint

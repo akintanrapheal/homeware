@@ -24,6 +24,11 @@ export async function GET(request: Request) {
 
   const search = new URL(request.url).searchParams.get('q')?.trim();
 
+  /*
+    Aggregate in the database rather than loading every order for every customer
+    into memory. The previous version pulled the whole order history back just to
+    sum it, which is fine at a hundred customers and ruinous at ten thousand.
+  */
   const customers = await prisma.customer.findMany({
     where: search
       ? {
@@ -41,19 +46,36 @@ export async function GET(request: Request) {
       phone: true,
       city: true,
       createdAt: true,
-      orders: {
-        select: { id: true, total: true, status: true, createdAt: true },
-      },
+      _count: { select: { orders: true } },
     },
     orderBy: { createdAt: 'desc' },
     take: 200,
   });
 
+  const ids = customers.map((c) => c.id);
+
+  const [paidTotals, lastOrders] = ids.length
+    ? await Promise.all([
+        prisma.order.groupBy({
+          by: ['customerId'],
+          where: { customerId: { in: ids }, status: { in: [...EARNING_STATUSES] } },
+          _sum: { total: true },
+          _count: { _all: true },
+        }),
+        prisma.order.groupBy({
+          by: ['customerId'],
+          where: { customerId: { in: ids } },
+          _max: { createdAt: true },
+        }),
+      ])
+    : [[], []];
+
+  const paidBy = new Map(paidTotals.map((r) => [r.customerId, r]));
+  const lastBy = new Map(lastOrders.map((r) => [r.customerId, r._max.createdAt]));
+
   const rows = customers
     .map((c) => {
-      const paid = c.orders.filter((o) =>
-        (EARNING_STATUSES as readonly string[]).includes(o.status),
-      );
+      const paid = paidBy.get(c.id);
       return {
         id: c.id,
         name: c.name,
@@ -61,13 +83,10 @@ export async function GET(request: Request) {
         phone: c.phone,
         city: c.city,
         createdAt: c.createdAt,
-        orderCount: c.orders.length,
-        paidOrderCount: paid.length,
-        lifetimeValue: paid.reduce((sum, o) => sum + o.total, 0),
-        lastOrderAt: c.orders.reduce<Date | null>(
-          (latest, o) => (!latest || o.createdAt > latest ? o.createdAt : latest),
-          null,
-        ),
+        orderCount: c._count.orders,
+        paidOrderCount: paid?._count._all ?? 0,
+        lifetimeValue: paid?._sum.total ?? 0,
+        lastOrderAt: lastBy.get(c.id) ?? null,
       };
     })
     .sort((a, b) => b.lifetimeValue - a.lifetimeValue);

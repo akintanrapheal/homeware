@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { isAdmin } from '@/lib/auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { audit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -82,7 +83,24 @@ export async function PATCH(
   if (data.imageUrl === '') data.imageUrl = null;
 
   try {
+    const before = await prisma.product.findUnique({ where: { id } });
     const product = await prisma.product.update({ where: { id }, data });
+
+    // Price and stock are the fields anyone ever asks about afterwards.
+    const changes: string[] = [];
+    if (before && data.price !== undefined && before.price !== data.price) {
+      changes.push(`price ${before.price} → ${data.price}`);
+    }
+    if (before && data.stock !== undefined && before.stock !== data.stock) {
+      changes.push(`stock ${before.stock} → ${data.stock}`);
+    }
+    if (before && data.compareAt !== undefined && before.compareAt !== data.compareAt) {
+      changes.push(`was-price ${before.compareAt ?? 'none'} → ${data.compareAt ?? 'none'}`);
+    }
+    await audit('product.update', `${product.name}: ${changes.join(', ') || 'details edited'}`, {
+      target: product.slug,
+    });
+
     return NextResponse.json({ product });
   } catch {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -102,7 +120,9 @@ export async function DELETE(
 
   const { id } = await params;
   try {
+    const doomed = await prisma.product.findUnique({ where: { id } });
     await prisma.product.delete({ where: { id } });
+    await audit('product.delete', `Deleted ${doomed?.name ?? id}`, { target: doomed?.slug });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });

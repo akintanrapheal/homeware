@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { identify, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
@@ -12,6 +13,9 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const limit = await rateLimit('contact', identify(request), 5, 600);
+  if (!limit.ok) return tooManyRequests(limit);
+
   let payload: unknown;
   try {
     payload = await request.json();

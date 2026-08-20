@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { identify, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { hasDatabase, prisma } from '@/lib/prisma';
 import {
@@ -19,6 +20,9 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const limit = await rateLimit('register', identify(request), 5, 900);
+  if (!limit.ok) return tooManyRequests(limit);
+
   if (!hasDatabase || !prisma) {
     return NextResponse.json(
       { error: 'Accounts require a database connection.' },

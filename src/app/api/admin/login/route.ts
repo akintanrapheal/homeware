@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
+import { identify, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import { ADMIN_COOKIE, SESSION_MAX_AGE, checkPassword, createSessionToken } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
+  // The one-second delay on a wrong password slows a single attacker; this stops
+  // a parallel one.
+  const limit = await rateLimit('admin-login', identify(request), 8, 900);
+  if (!limit.ok) return tooManyRequests(limit);
+
   if (!process.env.ADMIN_PASSWORD) {
     return NextResponse.json(
       { error: 'Admin access is not configured. Set ADMIN_PASSWORD in your environment.' },
