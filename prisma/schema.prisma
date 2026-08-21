@@ -186,6 +186,50 @@ model Review {
   @@index([approved, featured])
 }
 
+/**
+ * Staff accounts.
+ * Replaces the single shared store password. One shared secret means no
+ * accountability, no way to remove one person's access without changing it for
+ * everyone, and no way to give the person who packs boxes anything less than
+ * the keys to the pricing.
+ * OWNER is deliberately special: it cannot be suspended, demoted or deleted,
+ * and the last one cannot be removed. A shop that can lock itself out of its
+ * own admin is a worse problem than any it solves.
+ */
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         String    @default("STAFF") // OWNER | ADMIN | MANAGER | STAFF
+  suspended    Boolean   @default(false)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  resetTokens AdminResetToken[]
+
+  @@index([email])
+  @@index([role])
+}
+
+/**
+ * Single-use, short-lived, stored hashed — same treatment as customer resets.
+ */
+model AdminResetToken {
+  id          String    @id @default(cuid())
+  adminUserId String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@index([expiresAt])
+}
+
 model Category {
   id        String   @id @default(cuid())
   slug      String   @unique

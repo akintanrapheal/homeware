@@ -14,17 +14,30 @@ import {
   UserIcon,
 } from './icons';
 
-const LINKS = [
-  { href: '/admin', label: 'Dashboard', icon: SparkleIcon },
-  { href: '/admin/orders', label: 'Orders', icon: TruckIcon },
-  { href: '/admin/products', label: 'Products', icon: BagIcon },
-  { href: '/admin/categories', label: 'Categories', icon: SparkleIcon },
-  { href: '/admin/reviews', label: 'Reviews', icon: StarIcon },
-  { href: '/admin/customers', label: 'Customers', icon: UserIcon },
-  { href: '/admin/settings', label: 'Settings', icon: ShieldIcon },
+/**
+ * Each entry names the permission that reveals it. A staff member who cannot
+ * change prices should not be shown a Products link that 403s when they press
+ * it — hiding it is clearer than refusing it.
+ */
+const LINKS: { href: string; label: string; icon: typeof BagIcon; permission: string }[] = [
+  { href: '/admin', label: 'Dashboard', icon: SparkleIcon, permission: 'orders.view' },
+  { href: '/admin/orders', label: 'Orders', icon: TruckIcon, permission: 'orders.view' },
+  { href: '/admin/products', label: 'Products', icon: BagIcon, permission: 'products.view' },
+  { href: '/admin/categories', label: 'Categories', icon: SparkleIcon, permission: 'categories.manage' },
+  { href: '/admin/reviews', label: 'Reviews', icon: StarIcon, permission: 'reviews.manage' },
+  { href: '/admin/customers', label: 'Customers', icon: UserIcon, permission: 'customers.view' },
+  { href: '/admin/users', label: 'Staff', icon: ShieldIcon, permission: 'users.manage' },
+  { href: '/admin/settings', label: 'Settings', icon: ShieldIcon, permission: 'settings.manage' },
 ];
 
-export function AdminNav() {
+export function AdminNav({
+  session,
+  permissions,
+}: {
+  session?: { name: string; email: string; role: string };
+  permissions?: string[];
+}) {
+  const allowed = LINKS.filter((l) => !permissions || permissions.includes(l.permission));
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -42,7 +55,7 @@ export function AdminNav() {
 
   const nav = (
     <nav className="space-y-1">
-      {LINKS.map(({ href, label, icon: Icon }) => (
+      {allowed.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
           href={href}
@@ -72,8 +85,8 @@ export function AdminNav() {
         >
           <MenuIcon width={21} height={21} />
         </button>
-        <span className="text-sm font-semibold" style={{ color: 'var(--admin-text)' }}>
-          Store admin
+        <span className="truncate text-sm font-semibold" style={{ color: 'var(--admin-text)' }}>
+          {session?.name ?? 'Store admin'}
         </span>
         <button
           type="button"
@@ -134,6 +147,19 @@ export function AdminNav() {
         </div>
 
         <div className="space-y-1">
+          {session && (
+            <div className="mb-2 px-3 py-2">
+              <p className="truncate text-xs font-medium" style={{ color: 'var(--admin-text)' }}>
+                {session.name}
+              </p>
+              <p className="truncate text-[0.68rem]" style={{ color: 'var(--admin-muted)' }}>
+                {session.email} · {session.role.toLowerCase()}
+              </p>
+            </div>
+          )}
+          <Link href="/admin/profile" className="admin-nav-link">
+            Your profile
+          </Link>
           <a href="/" target="_blank" rel="noreferrer" className="admin-nav-link">
             View storefront
           </a>

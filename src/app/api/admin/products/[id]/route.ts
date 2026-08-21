@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { isAdmin } from '@/lib/auth';
+import { can, getAdminSession } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
 import { audit } from '@/lib/audit';
 
@@ -47,8 +47,12 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  const session = await getAdminSession();
+  if (!can(session?.role, 'products.view')) {
+    return NextResponse.json(
+      { error: session ? 'Your role does not allow that' : 'Unauthorised' },
+      { status: session ? 403 : 401 },
+    );
   }
   if (!hasDatabase || !prisma) {
     return NextResponse.json({ error: 'No database connected' }, { status: 503 });
@@ -64,8 +68,12 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  const session = await getAdminSession();
+  if (!can(session?.role, 'products.manage')) {
+    return NextResponse.json(
+      { error: session ? 'Your role does not allow that' : 'Unauthorised' },
+      { status: session ? 403 : 401 },
+    );
   }
   if (!hasDatabase || !prisma) {
     return NextResponse.json({ error: 'No database connected' }, { status: 503 });
@@ -112,8 +120,12 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  const session = await getAdminSession();
+  if (!can(session?.role, 'products.manage')) {
+    return NextResponse.json(
+      { error: session ? 'Your role does not allow that' : 'Unauthorised' },
+      { status: session ? 403 : 401 },
+    );
   }
   if (!hasDatabase || !prisma) {
     return NextResponse.json({ error: 'No database connected' }, { status: 503 });

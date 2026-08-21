@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
-import { isAdmin } from '@/lib/auth';
+import { can, getAdminSession } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -29,8 +29,12 @@ const MAX_BYTES = 4 * 1024 * 1024; // Vercel caps a serverless request body at ~
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif']);
 
 export async function POST(request: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  const session = await getAdminSession();
+  if (!can(session?.role, 'products.manage')) {
+    return NextResponse.json(
+      { error: session ? 'Your role does not allow that' : 'Unauthorised' },
+      { status: session ? 403 : 401 },
+    );
   }
 
   const blobConfigured = Boolean(

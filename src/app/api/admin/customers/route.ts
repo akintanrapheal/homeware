@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/auth';
+import { can, getAdminSession } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -15,8 +15,12 @@ const EARNING_STATUSES = ['PAID', 'PACKED', 'SHIPPED', 'DELIVERED'] as const;
  * sales, and a customer list that hides them misleads.
  */
 export async function GET(request: Request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  const session = await getAdminSession();
+  if (!can(session?.role, 'customers.view')) {
+    return NextResponse.json(
+      { error: session ? 'Your role does not allow that' : 'Unauthorised' },
+      { status: session ? 403 : 401 },
+    );
   }
   if (!hasDatabase || !prisma) {
     return NextResponse.json({ error: 'No database connected' }, { status: 503 });
