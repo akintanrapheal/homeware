@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { ProductArt } from './product-art';
-import { CloseIcon, SpinnerIcon } from './icons';
+import { CheckIcon, CloseIcon, SpinnerIcon } from './icons';
 import type { Accent } from '@/lib/types';
 
 /**
@@ -25,11 +25,13 @@ export function AdminImagePicker({
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [done, setDone] = useState('');
   const [urlDraft, setUrlDraft] = useState('');
 
   async function upload(file: File) {
     setUploading(true);
     setError('');
+    setDone('');
     try {
       const body = new FormData();
       body.append('file', file);
@@ -42,6 +44,9 @@ export function AdminImagePicker({
         throw new Error(data?.detail ? `${data.error} (${data.detail})` : (data?.error ?? 'Upload failed'));
       }
       onChange(data.url);
+      // Swapping the preview is easy to miss on a long form; say it plainly.
+      setDone(`Uploaded ${file.name} (${(file.size / 1024).toFixed(0)} KB).`);
+      window.setTimeout(() => setDone(''), 4000);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed');
     } finally {
@@ -59,8 +64,9 @@ export function AdminImagePicker({
         >
           {value ? (
             <>
+              {/* Matches how the shop renders it, so the preview is honest. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={value} alt="Product preview" className="h-full w-full object-cover" />
+              <img src={value} alt="Product preview" className="h-full w-full object-contain p-[8%]" />
               <button
                 type="button"
                 onClick={() => onChange(null)}
@@ -125,6 +131,8 @@ export function AdminImagePicker({
                   onChange(u);
                   setUrlDraft('');
                   setError('');
+                  setDone('Image URL applied.');
+                  window.setTimeout(() => setDone(''), 4000);
                 }}
                 className="admin-btn admin-btn-ghost shrink-0"
               >
@@ -151,6 +159,19 @@ export function AdminImagePicker({
           }}
         >
           {error}
+        </p>
+      )}
+
+      {done && !error && (
+        <p
+          className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+          style={{
+            background: 'color-mix(in oklab, var(--admin-good) 14%, transparent)',
+            color: 'var(--admin-good)',
+          }}
+        >
+          <CheckIcon width={14} height={14} />
+          {done} Remember to save the product.
         </p>
       )}
     </div>

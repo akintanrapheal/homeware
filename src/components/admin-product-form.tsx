@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AdminImagePicker } from './admin-image-picker';
-import { SpinnerIcon } from './icons';
+import { CheckIcon, SpinnerIcon } from './icons';
 import { discountPercent, formatNaira } from '@/lib/format';
 import type { Accent } from '@/lib/types';
 
@@ -69,6 +69,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
   const [categories, setCategories] = useState<{ slug: string; label: string }[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   // Once the slug has been set by hand, stop rewriting it from the name — a
   // published URL should not change because someone fixed a typo in the title.
@@ -120,6 +121,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
     event.preventDefault();
     if (saving) return;
     setSaving(true);
+    setSaved(false);
     setError('');
 
     const price = Number(draft.price);
@@ -162,10 +164,29 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? 'Could not save the product');
-      router.push('/admin/products');
+
+      /*
+        Editing used to redirect straight to the list, which looks identical
+        whether the save worked or the click missed. Confirm it on the page
+        instead and stay put, so the next edit does not need a round trip.
+
+        Creating still goes to the list: the useful next question after adding a
+        product is where it sits among the others.
+      */
+      setSaving(false);
+      setSaved(true);
       router.refresh();
+
+      if (isEdit) {
+        window.setTimeout(() => setSaved(false), 3500);
+        return;
+      }
+
+      window.setTimeout(() => router.push('/admin/products'), 700);
+      return;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save the product');
+      setSaved(false);
       setSaving(false);
     }
   }
@@ -424,15 +445,34 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       )}
 
       <div
-        className="sticky bottom-0 flex gap-3 border-t py-4 pb-safe"
+        className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t py-4 pb-safe"
         style={{ borderColor: 'var(--admin-line)', background: 'var(--admin-bg)' }}
       >
         <button type="submit" disabled={saving} className="admin-btn admin-btn-primary disabled:opacity-60">
-          {saving ? <SpinnerIcon width={14} height={14} /> : isEdit ? 'Save changes' : 'Create product'}
+          {saving ? (
+            <SpinnerIcon width={14} height={14} />
+          ) : saved ? (
+            <>
+              <CheckIcon width={14} height={14} />
+              Saved
+            </>
+          ) : isEdit ? (
+            'Save changes'
+          ) : (
+            'Create product'
+          )}
         </button>
         <Link href="/admin/products" className="admin-btn admin-btn-ghost">
-          Cancel
+          {saved ? 'Back to products' : 'Cancel'}
         </Link>
+
+        {saved && (
+          <span className="text-xs" style={{ color: 'var(--admin-good)' }}>
+            {isEdit
+              ? 'Changes are live — product pages refresh within about two minutes.'
+              : 'Product created.'}
+          </span>
+        )}
       </div>
     </form>
   );

@@ -267,13 +267,21 @@ export function ProductImage({
 }) {
   if (imageUrl) {
     return (
+      /*
+        `contain`, not `cover`. The frame is 4:5 but product photography rarely
+        is, so cover silently crops the ends off a wide shot — the handles of a
+        utensil set, the spout of a kettle. It also made photographed products
+        read far heavier than the generated silhouettes beside them, because a
+        photo filled the frame edge to edge while the artwork sits with margin.
+        Padding here keeps the whole product visible and the grid even.
+      */
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={imageUrl}
         alt={name}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
-        className={`h-full w-full object-cover ${className}`}
+        className={`h-full w-full object-contain p-[8%] ${className}`}
       />
     );
   }
