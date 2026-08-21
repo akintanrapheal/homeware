@@ -32,6 +32,10 @@ model Product {
   stock       Int      @default(0)
   imageUrl    String?
   accent      String   @default("clay") // clay | sage | sand | slate | copper | ink
+  /**
+   * Which generated silhouette to draw when there is no photo yet.
+   */
+  artShape    String?
   featured    Boolean  @default(false)
   bestseller  Boolean  @default(false)
   rating      Float    @default(4.8)
@@ -40,6 +44,7 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   orderItems OrderItem[]
+  reviews    Review[]
 
   @@index([category])
   @@index([featured])
@@ -54,7 +59,6 @@ model Product {
  * A single row holding everything the shop owner can edit without a deploy.
  * Kept as one row rather than a key/value bag so the fields stay typed and a
  * typo in a key cannot silently blank the storefront.
- *
  * Secrets live here too. They are never sent to the browser: the settings API
  * returns whether a key is set, not the key itself.
  */
@@ -73,24 +77,26 @@ model StoreSettings {
   address   String @default("")
   hours     String @default("")
 
-  freeDeliveryThreshold Int @default(120000)
+  freeDeliveryThreshold Int    @default(120000)
   announcement          String @default("")
 
   paystackPublicKey String?
   paystackSecretKey String?
   paystackEnabled   Boolean @default(false)
 
-  emailProvider  String  @default("resend")
-  emailApiKey    String?
-  emailFrom      String?
-  emailReplyTo   String?
-  emailOnOrder   Boolean @default(true)
-  notifyStore    Boolean @default(true)
+  emailProvider String  @default("resend")
+  emailApiKey   String?
+  emailFrom     String?
+  emailReplyTo  String?
+  emailOnOrder  Boolean @default(true)
+  notifyStore   Boolean @default(true)
 
   updatedAt DateTime @updatedAt
 }
 
-/** Delivery zones, editable rather than compiled in. */
+/**
+ * Delivery zones, editable rather than compiled in.
+ */
 model DeliveryZoneRow {
   id        String   @id @default(cuid())
   slug      String   @unique
@@ -119,7 +125,9 @@ model RateLimit {
   @@index([expiresAt])
 }
 
-/** Who changed what. One shared admin password means no accountability without it. */
+/**
+ * Who changed what. One shared admin password means no accountability without it.
+ */
 model AuditLog {
   id        String   @id @default(cuid())
   action    String
@@ -131,19 +139,51 @@ model AuditLog {
   @@index([createdAt])
 }
 
-/** Single-use, short-lived. The token itself is stored hashed. */
+/**
+ * Single-use, short-lived. The token itself is stored hashed.
+ */
 model PasswordResetToken {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   customerId String
-  tokenHash  String   @unique
+  tokenHash  String    @unique
   expiresAt  DateTime
   usedAt     DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([customerId])
   @@index([expiresAt])
+}
+
+/**
+ * Customer reviews.
+ * `productId` is nullable on purpose: a review of the shop itself belongs on
+ * the home page but attaches to nothing in the catalogue. Deleting a product
+ * therefore nulls its reviews rather than destroying what someone wrote.
+ * Nothing appears until `approved` — anything submitted from the storefront
+ * arrives unapproved, so the shop is never the last to know what is on it.
+ */
+model Review {
+  id        String   @id @default(cuid())
+  productId String?
+  author    String
+  city      String   @default("")
+  rating    Int      @default(5)
+  body      String
+  approved  Boolean  @default(false)
+  /**
+   * Shown in the home page testimonial strip.
+   */
+  featured  Boolean  @default(false)
+  source    String   @default("admin") // admin | storefront
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([productId, approved])
+  @@index([approved, featured])
 }
 
 model Category {
@@ -152,7 +192,9 @@ model Category {
   label     String
   blurb     String   @default("")
   group     String   @default("kitchen")
-  /** Which generated silhouette to draw for products with no photo. */
+  /**
+   * Which generated silhouette to draw for products with no photo.
+   */
   shape     String   @default("cookware")
   sortOrder Int      @default(0)
   active    Boolean  @default(true)
@@ -174,35 +216,37 @@ model Customer {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  orders Order[]
+  orders      Order[]
   resetTokens PasswordResetToken[]
 
   @@index([email])
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  reference     String      @unique
-  /** Client-supplied key so a double-tapped checkout cannot create two orders. */
-  idempotencyKey String?    @unique
+  id             String      @id @default(cuid())
+  reference      String      @unique
+  /**
+   * Client-supplied key so a double-tapped checkout cannot create two orders.
+   */
+  idempotencyKey String?     @unique
   // Null for guest checkout, which stays a first-class path — the snapshot
   // fields below are always written so an order is complete on its own.
-  customerId    String?
-  customerName  String
-  email         String
-  phone         String
-  address       String
-  city          String
-  state         String
-  note          String?
-  deliveryFee   Int         @default(0)
-  subtotal      Int
-  total         Int
-  paymentMethod String      @default("whatsapp") // whatsapp | paystack
-  status        OrderStatus @default(PENDING)
-  paidAt        DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  customerId     String?
+  customerName   String
+  email          String
+  phone          String
+  address        String
+  city           String
+  state          String
+  note           String?
+  deliveryFee    Int         @default(0)
+  subtotal       Int
+  total          Int
+  paymentMethod  String      @default("whatsapp") // whatsapp | paystack
+  status         OrderStatus @default(PENDING)
+  paidAt         DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   items    OrderItem[]
   customer Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)

@@ -11,16 +11,32 @@ import type { Accent } from '@/lib/types';
  * preview shows exactly what the shop will render — including the generated
  * silhouette that stands in when there is no photo.
  */
+/** The silhouettes on offer, in the order they read best as a set. */
+export const ART_SHAPES: { id: string; label: string }[] = [
+  { id: 'cookware', label: 'Pot' },
+  { id: 'knives', label: 'Knife' },
+  { id: 'appliances', label: 'Kettle' },
+  { id: 'tableware', label: 'Plates' },
+  { id: 'glassware', label: 'Glassware' },
+  { id: 'storage', label: 'Jar' },
+  { id: 'textiles', label: 'Linen' },
+];
+
 export function AdminImagePicker({
   value,
   onChange,
   category,
   accent,
+  shape,
+  onShapeChange,
 }: {
   value: string | null;
   onChange: (url: string | null) => void;
   category: string;
   accent: Accent;
+  /** Chosen silhouette, or null to follow the category. */
+  shape?: string | null;
+  onShapeChange?: (shape: string | null) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -78,7 +94,12 @@ export function AdminImagePicker({
               </button>
             </>
           ) : (
-            <ProductArt category={category} accent={accent} className="h-full w-full" />
+            <ProductArt
+              category={category}
+              accent={accent}
+              shape={shape ?? undefined}
+              className="h-full w-full"
+            />
           )}
         </div>
 
@@ -144,11 +165,66 @@ export function AdminImagePicker({
           {!value && (
             <p className="text-xs" style={{ color: 'var(--admin-muted)' }}>
               With no photo the shop draws the silhouette shown on the left, so the grid still
-              looks finished.
+              looks finished. Pick a different one below if it suits the product better.
             </p>
           )}
         </div>
       </div>
+
+      {/*
+        Only offered when there is no photograph: once a real image exists the
+        silhouette is never drawn, and showing a chooser for something invisible
+        is just a puzzle.
+      */}
+      {!value && onShapeChange && (
+        <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--admin-line)' }}>
+          <span className="admin-label">Placeholder silhouette</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onShapeChange(null)}
+              className="flex w-20 flex-col items-center gap-1 rounded-lg border p-1.5 transition"
+              style={
+                !shape
+                  ? { borderColor: 'var(--admin-accent)', background: 'color-mix(in oklab, var(--admin-accent) 8%, transparent)' }
+                  : { borderColor: 'var(--admin-line)' }
+              }
+            >
+              <span className="h-14 w-full overflow-hidden rounded">
+                <ProductArt category={category} accent={accent} className="h-full w-full" />
+              </span>
+              <span className="text-[0.62rem]" style={{ color: 'var(--admin-muted)' }}>
+                Auto
+              </span>
+            </button>
+
+            {ART_SHAPES.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onShapeChange(s.id)}
+                className="flex w-20 flex-col items-center gap-1 rounded-lg border p-1.5 transition"
+                style={
+                  shape === s.id
+                    ? { borderColor: 'var(--admin-accent)', background: 'color-mix(in oklab, var(--admin-accent) 8%, transparent)' }
+                    : { borderColor: 'var(--admin-line)' }
+                }
+              >
+                <span className="h-14 w-full overflow-hidden rounded">
+                  <ProductArt category={category} accent={accent} shape={s.id} className="h-full w-full" />
+                </span>
+                <span className="text-[0.62rem]" style={{ color: 'var(--admin-muted)' }}>
+                  {s.label}
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs" style={{ color: 'var(--admin-muted)' }}>
+            Auto follows the product&apos;s category. The accent colour above tints whichever you
+            pick.
+          </p>
+        </div>
+      )}
 
       {error && (
         <p

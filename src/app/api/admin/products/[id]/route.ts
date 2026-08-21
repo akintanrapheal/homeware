@@ -33,6 +33,7 @@ const patchSchema = z.object({
   compareAt: z.number().int().min(0).max(100_000_000).nullable().optional(),
   stock: z.number().int().min(0).max(100000).optional(),
   imageUrl: z.string().trim().max(600).nullable().optional(),
+  artShape: z.string().trim().max(40).nullable().optional(),
   accent: z.enum(['clay', 'sage', 'sand', 'slate', 'copper', 'ink']).optional(),
   featured: z.boolean().optional(),
   bestseller: z.boolean().optional(),

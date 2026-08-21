@@ -36,6 +36,7 @@ type DbProduct = {
   stock: number;
   imageUrl: string | null;
   accent: string;
+  artShape: string | null;
   featured: boolean;
   bestseller: boolean;
   rating: number;
@@ -223,4 +224,103 @@ export async function getCategoryShapes(): Promise<Record<string, string>> {
     acc[c.id] = c.shape ?? c.id;
     return acc;
   }, {});
+}
+
+export interface ReviewDTO {
+  id: string;
+  author: string;
+  city: string;
+  rating: number;
+  body: string;
+  createdAt: Date;
+  productName?: string | null;
+}
+
+/**
+ * Approved reviews marked for the home page.
+ *
+ * Falls back to nothing rather than to invented quotes: a testimonial strip
+ * that shows made-up praise once real reviews exist would be worse than an
+ * empty one, and the page hides the section when this is empty.
+ */
+export async function getFeaturedReviews(limit = 3): Promise<ReviewDTO[]> {
+  if (!hasDatabase || !prisma) return [];
+
+  try {
+    const rows = await prisma.review.findMany({
+      where: { approved: true, featured: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: { product: { select: { name: true } } },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      author: r.author,
+      city: r.city,
+      rating: r.rating,
+      body: r.body,
+      createdAt: r.createdAt,
+      productName: r.product?.name ?? null,
+    }));
+  } catch (error) {
+    console.error('[repo] featured reviews failed', error);
+    return [];
+  }
+}
+
+/** Approved reviews for one product, newest first. */
+export async function getProductReviews(productId: string, limit = 20): Promise<ReviewDTO[]> {
+  if (!hasDatabase || !prisma) return [];
+
+  try {
+    const rows = await prisma.review.findMany({
+      where: { productId, approved: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      author: r.author,
+      city: r.city,
+      rating: r.rating,
+      body: r.body,
+      createdAt: r.createdAt,
+    }));
+  } catch (error) {
+    console.error('[repo] product reviews failed', error);
+    return [];
+  }
+}
+
+/**
+ * The star rating to display.
+ *
+ * Real approved reviews win. Where there are none the product keeps the figure
+ * it was seeded with, so a new shop does not show every item at zero stars —
+ * but the moment a genuine review lands, the real average takes over rather
+ * than being averaged against a number nobody wrote.
+ */
+export async function getRatingFor(
+  productId: string,
+  fallback: { rating: number; reviewCount: number },
+): Promise<{ rating: number; reviewCount: number; fromReviews: boolean }> {
+  if (!hasDatabase || !prisma) return { ...fallback, fromReviews: false };
+
+  try {
+    const agg = await prisma.review.aggregate({
+      where: { productId, approved: true },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+
+    if (agg._count._all === 0) return { ...fallback, fromReviews: false };
+
+    return {
+      rating: Math.round((agg._avg.rating ?? 0) * 10) / 10,
+      reviewCount: agg._count._all,
+      fromReviews: true,
+    };
+  } catch {
+    return { ...fallback, fromReviews: false };
+  }
 }

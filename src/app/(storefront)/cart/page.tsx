@@ -59,6 +59,7 @@ export default function CartPage() {
                     category={product.category}
                     accent={product.accent}
             slug={product.slug}
+            shape={product.artShape ?? undefined}
                   />
                 </Link>
 

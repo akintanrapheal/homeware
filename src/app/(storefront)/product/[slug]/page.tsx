@@ -12,7 +12,8 @@ import {
   TruckIcon,
   WhatsAppIcon,
 } from '@/components/icons';
-import { getProductBySlug, getProducts, getRelatedProducts } from '@/lib/repo';
+import { getProductBySlug, getProductReviews, getProducts, getRatingFor, getRelatedProducts } from '@/lib/repo';
+import { ProductReviews } from '@/components/product-reviews';
 import { discountPercent, formatNaira } from '@/lib/format';
 import { CATEGORY_LABEL } from '@/lib/types';
 import { STORE } from '@/lib/config';
@@ -50,7 +51,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product, 4);
+  const [related, reviews, ratingInfo] = await Promise.all([
+    getRelatedProducts(product, 4),
+    getProductReviews(product.id, 20),
+    // Real reviews win; the seeded figure stands in only until there are some.
+    getRatingFor(product.id, { rating: product.rating, reviewCount: product.reviewCount }),
+  ]);
   const off = discountPercent(product.price, product.compareAt);
   const soldOut = product.stock <= 0;
   const lowStock = !soldOut && product.stock <= 6;
@@ -69,8 +75,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     brand: { '@type': 'Brand', name: product.brand },
     aggregateRating: {
       '@type': 'AggregateRating',
-      ratingValue: product.rating,
-      reviewCount: Math.max(1, product.reviewCount),
+      ratingValue: ratingInfo.rating,
+      reviewCount: Math.max(1, ratingInfo.reviewCount),
     },
     offers: {
       '@type': 'Offer',
@@ -121,6 +127,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 category={product.category}
                 accent={product.accent}
             slug={product.slug}
+            shape={product.artShape ?? undefined}
                 priority
               />
               <div className="absolute left-4 top-4 flex flex-col gap-2">
@@ -160,10 +167,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     />
                   ))}
                   <span className="ml-1 tabular-nums text-ink-700">
-                    {product.rating.toFixed(1)}
+                    {ratingInfo.rating.toFixed(1)}
                   </span>
                 </span>
-                <span>{product.reviewCount} reviews</span>
+                <span>{ratingInfo.reviewCount} reviews</span>
                 {product.sizeLabel && <span>{product.sizeLabel}</span>}
               </div>
 
@@ -244,6 +251,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
           </Reveal>
         </div>
+
+        <ProductReviews
+          productSlug={product.slug}
+          productName={product.name}
+          reviews={reviews.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }))}
+        />
 
         {related.length > 0 && (
           <section className="mt-20 sm:mt-28">

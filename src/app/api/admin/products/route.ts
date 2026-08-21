@@ -26,6 +26,7 @@ const productSchema = z.object({
   compareAt: z.number().int().min(0).max(100_000_000).nullable().default(null),
   stock: z.number().int().min(0).max(100000).default(0),
   imageUrl: z.string().trim().url().max(600).nullable().or(z.literal('')).default(null),
+  artShape: z.string().trim().max(40).nullable().optional(),
   accent: z.enum(['clay', 'sage', 'sand', 'slate', 'copper', 'ink']).default('clay'),
   featured: z.boolean().default(false),
   bestseller: z.boolean().default(false),

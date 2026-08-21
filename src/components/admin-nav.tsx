@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   BagIcon,
+  StarIcon,
   ShieldIcon,
   CloseIcon,
   MenuIcon,
@@ -18,6 +19,7 @@ const LINKS = [
   { href: '/admin/orders', label: 'Orders', icon: TruckIcon },
   { href: '/admin/products', label: 'Products', icon: BagIcon },
   { href: '/admin/categories', label: 'Categories', icon: SparkleIcon },
+  { href: '/admin/reviews', label: 'Reviews', icon: StarIcon },
   { href: '/admin/customers', label: 'Customers', icon: UserIcon },
   { href: '/admin/settings', label: 'Settings', icon: ShieldIcon },
 ];

@@ -326,6 +326,7 @@ export default function CheckoutPage() {
                       category={product.category}
                       accent={product.accent}
                       slug={product.slug}
+            shape={product.artShape ?? undefined}
                     />
                     <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-bl-lg bg-clay-600 text-[0.62rem] font-semibold text-paper-50">
                       {quantity}

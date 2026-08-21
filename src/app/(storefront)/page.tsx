@@ -11,7 +11,7 @@ import {
   TruckIcon,
   WhatsAppIcon,
 } from '@/components/icons';
-import { getBestsellers, getCategories, getFeatured, getProducts } from '@/lib/repo';
+import { getBestsellers, getCategories, getFeatured, getFeaturedReviews, getProducts } from '@/lib/repo';
 
 import { STORE } from '@/lib/config';
 import { buildEnquiryLink } from '@/lib/whatsapp';
@@ -67,12 +67,22 @@ const PROMISES = [
 ];
 
 export default async function HomePage() {
-  const [featured, bestsellers, all, categories] = await Promise.all([
+  const [featured, bestsellers, all, categories, liveReviews] = await Promise.all([
     getFeatured(4),
     getBestsellers(8),
     getProducts(),
     getCategories(),
+    getFeaturedReviews(3),
   ]);
+
+  /*
+    Real reviews replace the seeded ones entirely rather than mixing with them.
+    A strip that blends genuine praise with sample copy is worse than either on
+    its own, because nobody can tell which is which.
+  */
+  const testimonials = liveReviews.length
+    ? liveReviews.map((r) => ({ quote: r.body, name: r.author, city: r.city }))
+    : TESTIMONIALS;
 
   const heroProduct = featured[0] ?? all[0];
   // Grouped, not hardcoded, so a category added in the admin lands in the right
@@ -155,6 +165,7 @@ export default async function HomePage() {
                       category={heroProduct.category}
                       accent={heroProduct.accent}
                       slug={heroProduct.slug}
+                      shape={heroProduct.artShape ?? undefined}
                       className="w-full drop-shadow-[0_28px_44px_rgba(80,60,42,0.18)]"
                     />
                   </div>
@@ -249,6 +260,7 @@ export default async function HomePage() {
                           category={sample.category}
                           accent={sample.accent}
                           slug={sample.slug}
+                          shape={sample.artShape ?? undefined}
                           className="h-full w-full"
                         />
                       </div>
@@ -383,6 +395,7 @@ export default async function HomePage() {
                     category={p.category}
                     accent={p.accent}
                     slug={p.slug}
+                    shape={p.artShape ?? undefined}
                     className="h-full w-full"
                   />
                 </Link>
@@ -435,7 +448,7 @@ export default async function HomePage() {
           </Reveal>
 
           <div className="grid gap-4 md:grid-cols-3 md:gap-5">
-            {TESTIMONIALS.map((t, i) => (
+            {testimonials.map((t, i) => (
               <Reveal key={t.name} delay={i * 90}>
                 <figure className="card flex h-full flex-col p-6 sm:p-7">
                   <div className="mb-4 flex gap-1">

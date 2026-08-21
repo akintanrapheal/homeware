@@ -26,6 +26,8 @@ export interface Product {
   stock: number;
   imageUrl: string | null;
   accent: Accent;
+  /** Chosen silhouette for products with no photograph yet. */
+  artShape: string | null;
   featured: boolean;
   bestseller: boolean;
   rating: number;

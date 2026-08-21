@@ -34,6 +34,7 @@ export function ProductCard({
               category={product.category}
               accent={product.accent}
             slug={product.slug}
+            shape={product.artShape ?? undefined}
               priority={priority}
             />
           </div>

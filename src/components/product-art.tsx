@@ -254,6 +254,7 @@ export function ProductImage({
   category,
   accent,
   slug,
+  shape,
   className = '',
   priority = false,
 }: {
@@ -262,6 +263,8 @@ export function ProductImage({
   category: CategoryId;
   accent: Accent;
   slug?: string;
+  /** Chosen silhouette, when the product has no photograph yet. */
+  shape?: string;
   className?: string;
   priority?: boolean;
 }) {
@@ -286,6 +289,12 @@ export function ProductImage({
     );
   }
   return (
-    <ProductArt category={category} accent={accent} slug={slug} className={`h-full w-full ${className}`} />
+    <ProductArt
+      category={category}
+      accent={accent}
+      slug={slug}
+      shape={shape}
+      className={`h-full w-full ${className}`}
+    />
   );
 }

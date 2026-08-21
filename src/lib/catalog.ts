@@ -1,5 +1,8 @@
 import type { Product } from './types';
 
+/** The bundled entries pick their silhouette from their category. */
+type SeedProduct = Omit<Product, 'artShape'>;
+
 /**
  * The bundled catalog. It is the seed source for Postgres (`prisma/seed.ts`)
  * and the read-only fallback the site serves when DATABASE_URL is not set, so
@@ -8,7 +11,8 @@ import type { Product } from './types';
  * Swap `imageUrl` for your own photo URLs as you shoot them. Anything left null
  * renders the generated artwork instead of a broken image.
  */
-export const CATALOG: Product[] = [
+export const CATALOG: Product[] = (
+  [
   // ---------------------------------------------------------------- cookware
   {
     id: 'seed-cast-iron-casserole',
@@ -584,6 +588,7 @@ export const CATALOG: Product[] = [
     rating: 4.7,
     reviewCount: 68,
   },
-];
+  ] as SeedProduct[]
+).map((p) => ({ ...p, artShape: null }));
 
 export const CATALOG_BY_SLUG = new Map(CATALOG.map((p) => [p.slug, p]));

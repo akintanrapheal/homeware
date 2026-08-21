@@ -25,6 +25,7 @@ interface Draft {
   compareAt: string;
   stock: string;
   imageUrl: string | null;
+  artShape: string | null;
   accent: Accent;
   featured: boolean;
   bestseller: boolean;
@@ -45,6 +46,7 @@ const EMPTY: Draft = {
   compareAt: '',
   stock: '0',
   imageUrl: null,
+  artShape: null,
   accent: 'clay',
   featured: false,
   bestseller: false,
@@ -104,6 +106,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
           compareAt: p.compareAt ? String(p.compareAt) : '',
           stock: String(p.stock),
           imageUrl: p.imageUrl,
+          artShape: p.artShape ?? null,
           accent: p.accent,
           featured: p.featured,
           bestseller: p.bestseller,
@@ -148,6 +151,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       compareAt,
       stock: Number(draft.stock),
       imageUrl: draft.imageUrl,
+      artShape: draft.artShape,
       accent: draft.accent,
       featured: draft.featured,
       bestseller: draft.bestseller,
@@ -210,6 +214,8 @@ export function AdminProductForm({ productId }: { productId?: string }) {
           onChange={(url) => set('imageUrl', url)}
           category={draft.category || 'cookware'}
           accent={draft.accent}
+          shape={draft.artShape}
+          onShapeChange={(shape) => set('artShape', shape)}
         />
       </section>
 
