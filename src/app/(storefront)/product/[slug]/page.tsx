@@ -14,6 +14,7 @@ import {
 } from '@/components/icons';
 import { getProductBySlug, getProductReviews, getProducts, getRatingFor, getRelatedProducts } from '@/lib/repo';
 import { ProductReviews } from '@/components/product-reviews';
+import { jsonLdSafe } from '@/lib/safe-redirect';
 import { discountPercent, formatNaira } from '@/lib/format';
 import { CATEGORY_LABEL } from '@/lib/types';
 import { STORE } from '@/lib/config';
@@ -93,7 +94,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdSafe(jsonLd) }}
       />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">

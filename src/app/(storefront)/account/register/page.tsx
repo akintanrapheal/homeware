@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { useAccount } from '@/components/account-provider';
+import { safeRedirect } from '@/lib/safe-redirect';
 import { ArrowRightIcon, SpinnerIcon } from '@/components/icons';
 
 function RegisterForm() {
@@ -13,7 +14,7 @@ function RegisterForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const next = search.get('next') || '/account';
+  const next = safeRedirect(search.get('next'), '/account');
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

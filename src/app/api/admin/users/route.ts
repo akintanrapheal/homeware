@@ -26,8 +26,14 @@ const createSchema = z.object({
 
 export async function GET() {
   const session = await getAdminSession();
+  // 401 and 403 mean different things to a client: one says sign in, the other
+  // says do not bother. Collapsing them sends people to a login page they are
+  // already past.
   if (!can(session?.role, 'users.manage')) {
-    return NextResponse.json({ error: 'You do not have access to staff accounts' }, { status: 403 });
+    return NextResponse.json(
+      { error: session ? 'You do not have access to staff accounts' : 'Unauthorised' },
+      { status: session ? 403 : 401 },
+    );
   }
   if (!hasDatabase || !prisma) {
     return NextResponse.json({ error: 'No database connected' }, { status: 503 });
@@ -43,8 +49,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const session = await getAdminSession();
+  // 401 and 403 mean different things to a client: one says sign in, the other
+  // says do not bother. Collapsing them sends people to a login page they are
+  // already past.
   if (!can(session?.role, 'users.manage')) {
-    return NextResponse.json({ error: 'You do not have access to staff accounts' }, { status: 403 });
+    return NextResponse.json(
+      { error: session ? 'You do not have access to staff accounts' : 'Unauthorised' },
+      { status: session ? 403 : 401 },
+    );
   }
   if (!hasDatabase || !prisma) {
     return NextResponse.json({ error: 'No database connected' }, { status: 503 });
