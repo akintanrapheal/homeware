@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { ZONES_TAG } from '@/lib/settings';
 import { z } from 'zod';
 import { can, getAdminSession } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -35,6 +37,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await audit('zones.update', `${zone.label}: ${Object.keys(parsed.data).join(', ')} changed`, {
       target: zone.slug,
     });
+    revalidateTag(ZONES_TAG);
     return NextResponse.json({ zone });
   } catch {
     return NextResponse.json({ error: 'Zone not found' }, { status: 404 });
@@ -59,6 +62,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   try {
     const zone = await prisma.deliveryZoneRow.delete({ where: { id } });
     await audit('zones.delete', `Removed zone ${zone.label}`, { target: zone.slug });
+    revalidateTag(ZONES_TAG);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'Zone not found' }, { status: 404 });

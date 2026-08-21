@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { SETTINGS_TAG } from '@/lib/settings';
 import { z } from 'zod';
 import { can, getAdminSession } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -115,6 +117,8 @@ export async function PATCH(request: Request) {
   await audit('settings.update', `Updated: ${Object.keys(parsed.data).join(', ')}`, {
     target: 'store-settings',
   });
+
+  revalidateTag(SETTINGS_TAG);
 
   const { paystackSecretKey, emailApiKey, ...safe } = settings;
   return NextResponse.json({

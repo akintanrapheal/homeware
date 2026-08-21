@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { CATEGORIES_TAG } from '@/lib/settings';
 import { z } from 'zod';
 import { can, getAdminSession } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -43,6 +45,7 @@ export async function PATCH(
 
   try {
     const category = await prisma.category.update({ where: { id }, data: parsed.data });
+    revalidateTag(CATEGORIES_TAG);
     return NextResponse.json({ category });
   } catch {
     return NextResponse.json({ error: 'Category not found' }, { status: 404 });

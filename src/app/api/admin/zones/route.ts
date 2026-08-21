@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { ZONES_TAG } from '@/lib/settings';
 import { z } from 'zod';
 import { can, getAdminSession } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -72,7 +74,8 @@ export async function POST(request: Request) {
       ),
     );
     await audit('zones.import', `Imported ${DELIVERY_ZONES.length} default delivery zones`);
-    return NextResponse.json({ imported: DELIVERY_ZONES.length }, { status: 201 });
+    revalidateTag(ZONES_TAG);
+  return NextResponse.json({ imported: DELIVERY_ZONES.length }, { status: 201 });
   }
 
   const parsed = zoneSchema.safeParse(body);
@@ -86,6 +89,7 @@ export async function POST(request: Request) {
   try {
     const zone = await prisma.deliveryZoneRow.create({ data: parsed.data });
     await audit('zones.create', `Added zone ${zone.label} at ${zone.fee}`, { target: zone.slug });
+    revalidateTag(ZONES_TAG);
     return NextResponse.json({ zone }, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'A zone with that slug already exists' }, { status: 409 });

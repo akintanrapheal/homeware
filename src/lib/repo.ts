@@ -1,4 +1,7 @@
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { CATALOG } from './catalog';
+import { CATEGORIES_TAG } from './settings';
 import { hasDatabase, prisma } from './prisma';
 import type { Accent, CategoryId, CategoryMeta, Product } from './types';
 import { CATEGORIES } from './types';
@@ -194,7 +197,7 @@ export async function getBestsellers(limit = 8): Promise<Product[]> {
  * list so the nav, footer and shop filters never render empty — a storefront
  * with no categories looks broken in a way a missing product does not.
  */
-export async function getCategories(includeInactive = false): Promise<CategoryMeta[]> {
+async function readCategories(includeInactive = false): Promise<CategoryMeta[]> {
   if (!hasDatabase || !prisma) return CATEGORIES;
 
   try {
@@ -216,6 +219,18 @@ export async function getCategories(includeInactive = false): Promise<CategoryMe
     return CATEGORIES;
   }
 }
+
+/*
+  Cached like settings: the nav, the footer, the home tiles and the shop filters
+  all want this on every page, and it changes when someone adds a category —
+  which the tag invalidation handles at once.
+*/
+export const getCategories = cache(
+  unstable_cache(readCategories, ['store-categories'], {
+    tags: [CATEGORIES_TAG],
+    revalidate: 300,
+  }),
+);
 
 /** Slug → generated-artwork shape, for products with no photograph. */
 export async function getCategoryShapes(): Promise<Record<string, string>> {

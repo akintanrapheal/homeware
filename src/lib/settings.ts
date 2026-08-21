@@ -1,3 +1,5 @@
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { hasDatabase, prisma } from './prisma';
 import { STORE, DELIVERY_ZONES, FREE_DELIVERY_THRESHOLD, toWhatsAppNumber } from './config';
 
@@ -41,8 +43,22 @@ export interface DeliveryZone {
 const pick = (...values: (string | null | undefined)[]) =>
   values.find((v) => typeof v === 'string' && v.trim() !== '')?.trim() ?? '';
 
-/** Public settings — safe to render. Never includes a secret. */
-export async function getSettings(): Promise<ResolvedSettings> {
+/**
+ * Two layers of caching, because these are read on every single page and
+ * change perhaps twice a year.
+ *
+ *   react.cache   — deduplicates within one request. The header, the footer and
+ *                   the delivery calculation all ask for settings; that should
+ *                   be one query, not three.
+ *   unstable_cache — holds the answer between requests, invalidated by tag the
+ *                   moment the admin saves, so an edit still appears at once
+ *                   rather than after a timeout.
+ */
+export const SETTINGS_TAG = 'store-settings';
+export const CATEGORIES_TAG = 'store-categories';
+export const ZONES_TAG = 'delivery-zones';
+
+async function readSettings(): Promise<ResolvedSettings> {
   const fallback: ResolvedSettings = {
     storeName: STORE.name,
     tagline: STORE.tagline,
@@ -124,7 +140,11 @@ export async function getSecrets(): Promise<{
   }
 }
 
-export async function getDeliveryZones(): Promise<DeliveryZone[]> {
+export const getSettings = cache(
+  unstable_cache(readSettings, ['store-settings'], { tags: [SETTINGS_TAG], revalidate: 300 }),
+);
+
+async function readDeliveryZones(): Promise<DeliveryZone[]> {
   if (!hasDatabase || !prisma) {
     return DELIVERY_ZONES.map((z) => ({ id: z.id, label: z.label, fee: z.fee }));
   }
@@ -143,6 +163,10 @@ export async function getDeliveryZones(): Promise<DeliveryZone[]> {
     return DELIVERY_ZONES.map((z) => ({ id: z.id, label: z.label, fee: z.fee }));
   }
 }
+
+export const getDeliveryZones = cache(
+  unstable_cache(readDeliveryZones, ['delivery-zones'], { tags: [ZONES_TAG], revalidate: 300 }),
+);
 
 /**
  * Resolves the fee for a zone. Unknown zones are rejected by returning null so
